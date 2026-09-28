@@ -1,0 +1,38 @@
+# Unity generated directories
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Bb]uild/
+[Bb]uilds/
+MemoryCaptures/
+Recordings/
+# IDE and machine-local files
+.vs/
+.vscode/
+.idea/
+*.csproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.opendb
+*.VC.db
+.DS_Store
+Thumbs.db
+# Local captures and individual coursework
+Captures/
+Submission/
+.upload-tmp/
+*.log
+# Credentials
+.env
+.env.*
+!.env.example
+*.keystore
+*.jks
+sysinfo.txt
+*.stackdump
