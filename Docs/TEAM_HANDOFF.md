@@ -4,20 +4,22 @@
 
 本次上传的是 Unity 源码、场景、素材及配置，不包含个人作业提交包、缓存或账号信息。仓库根目录可直接由 Unity Hub 打开。
 
-项目版本为 `2022.3.42f1c1`。原制作环境尚未安装 WebGL Build Support，未生成可运行的 WebGL 构建。**源码上传不等于网页交付完成。**
+项目已升级为 Unity 6.3 LTS，版本为 `6000.3.24f1`。尚未生成可运行的 WebGL 构建。**源码上传不等于网页交付完成。**
 
 ## 建议分工
 
 | 工作 | 主要入口 | 接手目标 |
 | --- | --- | --- |
 | 网页构建与发布 | `Editor/JellyWebBuild.cs` | 安装模块、构建、浏览器验收、发布 URL |
-| 关卡与难度 | `JellyLevels.cs`、`JellyBoard.cs`、`JellyWorldCampaign.cs` | 调整难度，确认所有关卡可通关 |
+| 关卡与难度 | `JellyLevels.cs`、`JellyBoard.cs`、`JellyWorldCampaign.cs` | 调整地图模板与难度，确认所有关卡可通关 |
 | UI 与输入 | `JellyWorld.cs`、`JellyWorldInput.cs`、`JellyWorldToolPool.cs` | 分辨率适配、拖动、暂停体验 |
 | 道具与场景 | `JellyWorldToolActions.cs`、`JellyGolemMode.cs`、`JellySugarRange.cs` | 边界、场景往返、计分同步 |
 | 音效与素材 | `JellyWorldAudio.cs`、`Audio/SOURCES.md` | 网页音频、音量、素材来源 |
 | 验收 | `Editor/*Verification.cs` | 自动回归与实际浏览器、人工验收 |
 
 上述目录都在 `Assets/JellyWorld` 内，运行时代码在 `Scripts` 内。
+
+12 关的整体地图轮廓定义在 `JellyLevels.cs` 的 `MapRows` 中：`#` 表示有效格，`.` 表示缺口，文本从上到下书写。修改模板时保持每行、行数与关卡 `Size` 一致，并同步检查有效格数量、冰层数量和收集目标。
 
 ## Git 协作
 
@@ -36,7 +38,7 @@ git push -u origin feature/你的功能名
 - 资源和 `.meta` 一起提交；移动资源优先在 Unity 内操作，不要重新生成旧 GUID。
 - Unity 已启用 Visible Meta Files 和文本序列化。
 - 包版本变更时同时提交 `manifest.json` 与 `packages-lock.json`。
-- 制作时使用的 Unity MCP 编辑器包仍保留，运行游戏不需要 MCP 服务。若小组决定移除，在分支中同步修改依赖和锁文件。
+- 已移除仅供开发连接使用的 Unity MCP Git 包，避免打开工程时依赖外部 GitHub 下载；游戏运行不需要 MCP 服务。`Newtonsoft Json` 已改为明确的 Unity Registry 依赖。
 
 ## 导出 WebGL
 

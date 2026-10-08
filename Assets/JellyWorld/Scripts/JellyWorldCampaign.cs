@@ -5,6 +5,7 @@ namespace JellyWorldGame
     public partial class JellyWorld
     {
         public int BoardSize {get{return board!=null?board.Width:8;}}
+        public int PlayableCellCount {get{return board!=null?board.PlayableCount:BoardSize*BoardSize;}}
         public float BoardHalf {get{return (BoardSize-1)*.5f;}}
         public float BoardLimit {get{return BoardHalf+.12f;}}
         public JellyLevel LevelSpec {get{return JellyLevels.Get(level);}}
@@ -19,15 +20,41 @@ namespace JellyWorldGame
         InputField playerInput;
         int rankLevel=1;
         bool Inside(Vector2Int p){return board!=null && board.Contains(p);}
+        public bool IsPlayableCell(int x,int y){return board!=null && board.Contains(new Vector2Int(x,y));}
+        bool IsPlayableWorldPoint(Vector3 point)
+        {
+            int x=Mathf.RoundToInt(point.x+BoardHalf),y=Mathf.RoundToInt(point.z+BoardHalf);
+            return IsPlayableCell(x,y);
+        }
+        public Vector3 ConstrainGuardianMove(Vector3 before,Vector3 desired)
+        {
+            if(IsPlayableWorldPoint(desired))return desired;
+            var xOnly=new Vector3(desired.x,before.y,before.z);if(IsPlayableWorldPoint(xOnly))return xOnly;
+            var zOnly=new Vector3(before.x,before.y,desired.z);if(IsPlayableWorldPoint(zOnly))return zOnly;
+            return before;
+        }
+        public Vector3 NearestPlayableWorldPoint(Vector3 desired)
+        {
+            if(IsPlayableWorldPoint(desired))return desired;
+            float best=float.MaxValue;Vector3 result=desired;
+            for(int x=0;x<BoardSize;x++)for(int y=0;y<BoardSize;y++)if(IsPlayableCell(x,y)) {
+                var candidate=new Vector3(x-BoardHalf,desired.y,y-BoardHalf);
+                float distance=(new Vector2(candidate.x-desired.x,candidate.z-desired.z)).sqrMagnitude;
+                if(distance<best){best=distance;result=candidate;}
+            }
+            return result;
+        }
         void BuildBoardStage()
         {
             if(stage!=null){stage.gameObject.SetActive(false);if(Application.isPlaying)Destroy(stage.gameObject);else DestroyImmediate(stage.gameObject);}
             stage=Group("Jelly board "+BoardSize+"x"+BoardSize,transform);stage.localRotation=Quaternion.Euler(7,-7,0);
-            Shape("Lavender tray",stage,new Vector3(0,0,.70f),new Vector3(BoardSize+1.05f,BoardSize+1.05f,.65f),plum);
-            Shape("Cream rim",stage,new Vector3(0,0,.42f),new Vector3(BoardSize+.86f,BoardSize+.86f,.35f),cream);
-            Shape("Grape soda inset",stage,new Vector3(0,0,.24f),new Vector3(BoardSize+.46f,BoardSize+.46f,.26f),blush);
-            for(int x=0;x<BoardSize;x++)for(int y=0;y<BoardSize;y++)
-                Shape("Sugar pocket",stage,Pos(x,y)+new Vector3(0,0,.16f),new Vector3(.96f,.96f,.13f),white);
+            for(int x=0;x<BoardSize;x++)for(int y=0;y<BoardSize;y++) {
+                if(board!=null && !board.Contains(new Vector2Int(x,y)))continue;
+                Vector3 p=Pos(x,y);
+                Shape("Map base "+x+","+y,stage,p+new Vector3(0,0,.72f),new Vector3(1.10f,1.10f,.54f),plum);
+                Shape("Map rim "+x+","+y,stage,p+new Vector3(0,0,.43f),new Vector3(1.02f,1.02f,.30f),cream);
+                Shape("Sugar pocket "+x+","+y,stage,p+new Vector3(0,0,.22f),new Vector3(.94f,.94f,.14f),white);
+            }
             tileRoot=Group("Living jelly pieces",stage);
         }
         void ResetObjectives()
@@ -37,7 +64,7 @@ namespace JellyWorldGame
             frost=new bool[BoardSize,BoardSize];frostVisuals=new GameObject[BoardSize,BoardSize];FrostRemaining=InfiniteMode?0:LevelSpec.Frost;
             var random=new System.Random(level*241+37);int count=0;
             while(count<FrostRemaining) {
-                int x=random.Next(BoardSize),y=random.Next(BoardSize);if(frost[x,y])continue;
+                int x=random.Next(BoardSize),y=random.Next(BoardSize);if(!IsPlayableCell(x,y) || frost[x,y])continue;
                 frost[x,y]=true;count++;
                 var shell=Shape("Ice shell "+x+","+y,stage,Pos(x,y),new Vector3(.98f,.98f,.98f),iceShell);
                 shell.GetComponent<Renderer>().shadowCastingMode=UnityEngine.Rendering.ShadowCastingMode.Off;
@@ -136,8 +163,12 @@ namespace JellyWorldGame
                 var c=JellyLevels.All[i];bool open=c.Id<=JellyProgress.Unlocked;
                 Vector2 p=new Vector2(-561+(i%4)*374,220-(i/4)*235);
                 var card=Panel("Level "+c.Id,levelContent,p,new Vector2(348,208),open?Color.white:new Color(.83f,.86f,.90f));
-                Label("Level number",card.transform,c.Id.ToString("00")+"   "+c.Name,new Vector2(0,64),new Vector2(306,42),25,open?Ink:new Color(.47f,.50f,.56f));
-                Label("Level dimensions",card.transform,c.Size+"×"+c.Size+"  ·  "+c.Colors+" 色  ·  "+c.Moves+" 步",new Vector2(0,21),new Vector2(306,33),18,Ink);
+                Label("Level number",card.transform,c.Id.ToString("00")+"   "+c.Name,new Vector2(-49,64),new Vector2(208,42),23,open?Ink:new Color(.47f,.50f,.56f));
+                Label("Level dimensions",card.transform,c.MapName+"  ·  "+c.CellCount+" 格\n"+c.Size+"×"+c.Size+" · "+c.Colors+" 色 · "+c.Moves+" 步",new Vector2(-49,18),new Vector2(208,46),15,Ink);
+                var preview=Rect("Map preview",card.transform,new Vector2(120,45),new Vector2(76,76));
+                float cell=68f/c.Size;
+                for(int row=0;row<c.Size;row++)for(int x=0;x<c.Size;x++)if(c.MapRows[row][x]=='#')
+                    Panel("Map cell",preview,new Vector2((x-(c.Size-1)*.5f)*cell,((c.Size-1)*.5f-row)*cell),Vector2.one*(cell-.8f),open?new Color(.53f,.39f,.82f):new Color(.61f,.64f,.69f));
                 var goals=new System.Collections.Generic.List<string>();
                 if(c.Frost>0)goals.Add("清冰 "+c.Frost);
                 if(c.ColorA>=0)goals.Add(JellyLevels.ColorNames[c.ColorA]+" "+c.AmountA);

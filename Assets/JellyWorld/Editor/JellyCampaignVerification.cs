@@ -27,9 +27,27 @@ public static class JellyCampaignVerification
         int n=w.BoardSize;Check(w.tiles.GetLength(0)==n,"dynamic tile array");
         for(int x=0;x<n;x++)for(int y=0;y<n;y++) {
             var t=w.tiles[x,y];
-            Check(t!=null && t.x==x && t.y==y && t.color==w.board.Cells[x,y] && t.color<w.board.ColorCount,"tile identity and color range");
+            if(w.board.Contains(new Vector2Int(x,y)))
+                Check(t!=null && t.x==x && t.y==y && t.color==w.board.Cells[x,y] && t.color<w.board.ColorCount,"tile identity and color range");
+            else Check(t==null && w.board.Cells[x,y]==JellyBoard.Blocked,"map hole stays empty");
         }
         Vector2Int a,b;Check(w.board.Matches().Count==0 && w.board.FindMove(out a,out b),"stable playable grid");
+    }
+    static Vector2Int LastPlayable(JellyBoard board)
+    {
+        for(int y=board.Width-1;y>=0;y--)for(int x=board.Width-1;x>=0;x--) {
+            var p=new Vector2Int(x,y);if(board.Contains(p))return p;
+        }
+        return new Vector2Int(-1,-1);
+    }
+    static int CrossCount(JellyBoard board,Vector2Int center)
+    {
+        var cells=new HashSet<Vector2Int>();
+        for(int i=0;i<board.Width;i++) {
+            var horizontal=new Vector2Int(i,center.y);if(board.Contains(horizontal))cells.Add(horizontal);
+            var vertical=new Vector2Int(center.x,i);if(board.Contains(vertical))cells.Add(vertical);
+        }
+        return cells.Count;
     }
     static IEnumerator Verify(JellyWorld w)
     {
@@ -47,9 +65,11 @@ public static class JellyCampaignVerification
             w.StartChallenge();
             foreach(var level in JellyLevels.All) {
                 for(int seed=0;seed<30;seed++) {
-                    var b=new JellyBoard(seed,level.Size,level.Colors);Vector2Int a,c;
+                    var b=new JellyBoard(seed,level.Size,level.Colors,level.CreateMask());Vector2Int a,c;
                     Check(b.Matches().Count==0 && b.FindMove(out a,out c),"level opening legal");
-                    for(int x=0;x<level.Size;x++)for(int y=0;y<level.Size;y++)Check(b.Cells[x,y]<level.Colors,"configured color count");
+                    Check(b.PlayableCount==level.CellCount,"configured map cell count");
+                    for(int x=0;x<level.Size;x++)for(int y=0;y<level.Size;y++)
+                        Check(b.Contains(new Vector2Int(x,y))?b.Cells[x,y]>=0 && b.Cells[x,y]<level.Colors:b.Cells[x,y]==JellyBoard.Blocked,"configured map and color range");
                 }
                 w.level=level.Id;w.NewGame();yield return null;Stable(w);
                 Check(w.moves==level.Moves && w.FrostRemaining==level.Frost,"level objectives and move budget");
@@ -57,20 +77,20 @@ public static class JellyCampaignVerification
                 if(level.Frost>0 || level.ColorA>=0)Check(!w.ObjectivesMet,"score alone cannot bypass collection or ice");
             }
             w.level=12;w.NewGame();yield return null;
-            int color=w.board.Cells[9,9];w.ChooseTool(0);w.ClickCell(new Vector2Int(9,9));
+            var edge=LastPlayable(w.board);int color=w.board.Cells[edge.x,edge.y];w.ChooseTool(0);w.ClickCell(edge);
             yield return WaitFor(w);Check(w.collected[color]>0,"hammer counts collection at last cell");Stable(w);
-            w.ChooseTool(1);w.ClickCell(new Vector2Int(9,9));yield return WaitFor(w);Check(w.score>=20*60,"10 by 10 cross clears 19 unique cells");Stable(w);
+            int cross=CrossCount(w.board,edge);w.ChooseTool(1);w.ClickCell(edge);yield return WaitFor(w);Check(w.score>=cross*60,"cross clears every playable row and column cell");Stable(w);
             w.ChooseTool(2);yield return WaitFor(w);Stable(w);
-            w.SummonGuardian();Check(w.ConfirmGuardianLanding(new Vector2Int(9,9)),"largest-board landing accepted");
+            edge=LastPlayable(w.board);w.SummonGuardian();Check(w.ConfirmGuardianLanding(edge),"map-edge landing accepted");
             while(w.Guardian.Transitioning)yield return null;
-            Check(Vector3.Distance(w.Guardian.Actor.position,new Vector3(4.5f,.65f,4.5f))<.04f,"guardian coordinate uses board half");
+            Check(Vector3.Distance(w.Guardian.Actor.position,new Vector3(edge.x-w.BoardHalf,.65f,edge.y-w.BoardHalf))<.04f,"guardian coordinate uses mapped cell");
             w.Guardian.Drive(Vector2.one,true,.1f);
             Check(w.Guardian.Actor.position.x<=4.621f && w.Guardian.Actor.position.z<=4.621f,"largest-board bounds");
             w.Guardian.End();yield return WaitFor(w,true);Stable(w);
             w.StartRange();while(w.Range.Transitioning)yield return null;
-            Check(w.Range.Targets.GetLength(0)==10 && w.Range.Remaining==100,"range scales to 100 targets");
+            Check(w.Range.Targets.GetLength(0)==10 && w.Range.Remaining==w.PlayableCellCount,"range uses mapped targets");
             yield return new WaitForSeconds(.22f);
-            var target=w.Range.Targets[9,9];
+            edge=LastPlayable(w.board);var target=w.Range.Targets[edge.x,edge.y];
             Check(w.Range.FireAtScreen(Camera.main.WorldToScreenPoint(target.transform.position)),"shoot last cell");
             yield return new WaitForSeconds(.8f);Check(w.Range.Hits==1,"shot resolves on dynamic board");
             w.Range.End();while(w.mode=="range")yield return null;yield return WaitFor(w);Stable(w);

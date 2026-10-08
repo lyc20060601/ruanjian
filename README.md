@@ -14,16 +14,16 @@
    git clone https://github.com/lyc20060601/ruanjian.git
    ```
 
-2. 在 Unity Hub 中添加仓库根目录。工程版本为 **Unity 2022.3.42f1c1**，记录在 `ProjectSettings/ProjectVersion.txt`。
+2. 在 Unity Hub 中添加仓库根目录。工程版本为 **Unity 6.3 LTS（6000.3.24f1）**，记录在 `ProjectSettings/ProjectVersion.txt`。
 3. 等待 Unity 还原依赖并导入素材，打开 `Assets/Scenes/JellyWorld.unity`，点击 Play。
 
 已包含完整 `Assets`、`Packages`、`ProjectSettings` 和 `.meta` 文件，不需要原作者的 `Library` 缓存。
 
 ## 当前功能
 
-- 12 个逐步解锁关卡：从 6×6 / 4 色到 10×10 / 7 色。
+- 12 个逐步解锁关卡：每关使用不同的整体地图轮廓，包括爱心、钻石、沙漏、蝴蝶、甜甜圈和水晶等，从 6×6 / 4 色逐步增加到 10×10 / 7 色。
 - 积分、颜色收集和清冰目标；进度、星级、最高分保存。
-- 相邻交换、三连消除、连锁、补位、按住拖动及动画期间预输入。
+- 相邻交换、三连消除、连锁、异形地图内补位、按住拖动及动画期间预输入。
 - 果冻锤、十字光束、洗牌、守护者、糖弹靶场；无限模式。
 - 守护者跑动、蓄力跳跃、第一／第三人称、两段碎冰。
 - 独立靶场场景、糖弹射击、返回后同步棋盘。

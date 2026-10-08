@@ -187,11 +187,11 @@ namespace JellyWorldGame
             ResetGuardian();
             StopAllCoroutines();ClearEffects();Time.timeScale=1;paused=false;busy=false;pointerDown=false;mode="play";
             score=0;moves=InfiniteMode?26:LevelSpec.Moves;charges=new int[]{3,2,2};activeTool=-1;selected=new Vector2Int(-1,-1);
-            board=new JellyBoard(Environment.TickCount,InfiniteMode?8:LevelSpec.Size,InfiniteMode?5:LevelSpec.Colors);
+            board=new JellyBoard(Environment.TickCount,InfiniteMode?8:LevelSpec.Size,InfiniteMode?5:LevelSpec.Colors,InfiniteMode?null:LevelSpec.CreateMask());
             BuildBoardStage();
             ClearTiles();
             ResetObjectives();
-            for(int x=0;x<BoardSize;x++) for(int y=0;y<BoardSize;y++) Spawn(x,y,board.Cells[x,y],false);
+            for(int x=0;x<BoardSize;x++) for(int y=0;y<BoardSize;y++)if(board.Contains(new Vector2Int(x,y)))Spawn(x,y,board.Cells[x,y],false);
             hero.gameObject.SetActive(false);stage.gameObject.SetActive(true);
             menuUI.gameObject.SetActive(false);gameUI.gameObject.SetActive(true);modal.gameObject.SetActive(false);
             if(infiniteUI!=null)infiniteUI.gameObject.SetActive(false);
@@ -297,7 +297,7 @@ namespace JellyWorldGame
                     var t=tiles[p.x,p.y];
                     if(t!=null)RegisterClear(p.x,p.y,t.color);
                     if(t!=null) { Burst(t.transform.position,t.color);Destroy(t.gameObject);tiles[p.x,p.y]=null; }
-                    board.Cells[p.x,p.y]=-1;
+                    board.Cells[p.x,p.y]=JellyBoard.Empty;
                 }
                 UpdateHUD();yield return new WaitForSeconds(.22f);
                 CollapseBoard();
@@ -357,7 +357,7 @@ namespace JellyWorldGame
             goalText.text=InfiniteMode?"目标 —":"目标 "+Target.ToString("N0");
             progress.fillAmount=InfiniteMode?1:ObjectiveProgress();
             if(moveRule!=null)moveRule.text=InfiniteMode?"不限步数":"有效交换消耗 1 步";
-            if(chapterLabel!=null)chapterLabel.text=InfiniteMode?"无限模式":"关卡 "+level;
+            if(chapterLabel!=null)chapterLabel.text=InfiniteMode?"无限模式":"关卡 "+level+" · "+LevelSpec.MapName;
             RefreshToolPool();
         }
         RectTransform Rect(string name,Transform parent,Vector2 pos,Vector2 size)

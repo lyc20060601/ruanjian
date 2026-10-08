@@ -8,12 +8,23 @@ namespace JellyWorldGame
     public sealed class JellyBoard
     {
         public const int Size = 8, Colors = 5;
+        public const int Empty = -1, Blocked = -2;
         public readonly int Width, ColorCount;
         public readonly int[,] Cells;
+        public readonly bool[,] Playable;
+        public readonly int PlayableCount;
         readonly System.Random random;
-        public JellyBoard(int seed,int width=Size,int colors=Colors) {
+        public JellyBoard(int seed,int width=Size,int colors=Colors,bool[,] playable=null) {
             if(width<3 || width>12 || colors<3 || colors>7)throw new ArgumentOutOfRangeException();
-            Width=width;ColorCount=colors;Cells=new int[Width,Width];random=new System.Random(seed);Generate();
+            if(playable!=null && (playable.GetLength(0)!=width || playable.GetLength(1)!=width))throw new ArgumentException("Playable mask dimensions must match board width.");
+            Width=width;ColorCount=colors;Cells=new int[Width,Width];Playable=new bool[Width,Width];random=new System.Random(seed);
+            int count=0;
+            for(int x=0;x<Width;x++)for(int y=0;y<Width;y++) {
+                Playable[x,y]=playable==null || playable[x,y];
+                if(Playable[x,y])count++;else Cells[x,y]=Blocked;
+            }
+            if(count<9)throw new ArgumentException("A level map needs at least nine playable cells.");
+            PlayableCount=count;Generate();
         }
         public int Next() { return random.Next(ColorCount); }
         public void Generate()
@@ -23,6 +34,7 @@ namespace JellyWorldGame
                 for (int y = 0; y < Width; y++)
                     for (int x = 0; x < Width; x++)
                     {
+                        if(!Playable[x,y]) {Cells[x,y]=Blocked;continue;}
                         int c;
                         do { c = Next(); }
                         while ((x > 1 && Cells[x-1,y] == c && Cells[x-2,y] == c) ||
@@ -35,10 +47,12 @@ namespace JellyWorldGame
             throw new InvalidOperationException("Could not generate a playable board.");
         }
         public static bool Inside(Vector2Int p) { return p.x >= 0 && p.x < Size && p.y >= 0 && p.y < Size; }
-        public bool Contains(Vector2Int p) {return p.x>=0 && p.y>=0 && p.x<Width && p.y<Width;}
+        public bool InBounds(Vector2Int p) {return p.x>=0 && p.y>=0 && p.x<Width && p.y<Width;}
+        public bool Contains(Vector2Int p) {return InBounds(p) && Playable[p.x,p.y];}
         public static bool Adjacent(Vector2Int a, Vector2Int b) { return Math.Abs(a.x-b.x)+Math.Abs(a.y-b.y)==1; }
         public void Swap(Vector2Int a, Vector2Int b)
         {
+            if(!Contains(a) || !Contains(b))throw new ArgumentOutOfRangeException();
             int t=Cells[a.x,a.y]; Cells[a.x,a.y]=Cells[b.x,b.y]; Cells[b.x,b.y]=t;
         }
         public HashSet<Vector2Int> Matches()
@@ -58,7 +72,7 @@ namespace JellyWorldGame
         {
             for(int y=0;y<Width;y++) for(int x=0;x<Width;x++)
             {
-                a=new Vector2Int(x,y);
+                a=new Vector2Int(x,y);if(!Contains(a))continue;
                 for(int d=0;d<2;d++)
                 {
                     b=a+(d==0?Vector2Int.right:Vector2Int.up);
