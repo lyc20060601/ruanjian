@@ -218,7 +218,7 @@ namespace JellyWorldGame
             if(mode=="golem") { if(Input.GetKeyDown(KeyCode.Escape)) TogglePause(); return; }
             if(cam!=null) {
                 bool onBoard=mode=="play" || mode=="result";
-                cam.orthographicSize=onBoard?Mathf.Max((BoardSize+2.7f)*.5f,(BoardSize+2.7f)*.89f/cam.aspect):Mathf.Max(6.15f,10.7f/cam.aspect);
+                cam.orthographicSize=onBoard?Mathf.Max((BoardSize+2.0f)*.5f,(BoardSize+2.0f)*.89f/cam.aspect):Mathf.Max(6.15f,10.7f/cam.aspect);
                 cam.transform.position=new Vector3(onBoard?(BoardSize+2.7f)*.19626f:0,0,-22);
             }
             if(hero!=null && hero.gameObject.activeSelf) hero.localPosition=new Vector3(4,-.1f+Mathf.Sin(Time.unscaledTime*.9f)*.13f,0);

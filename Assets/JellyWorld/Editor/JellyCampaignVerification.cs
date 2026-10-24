@@ -85,10 +85,10 @@ public static class JellyCampaignVerification
             while(w.Guardian.Transitioning)yield return null;
             Check(Vector3.Distance(w.Guardian.Actor.position,new Vector3(edge.x-w.BoardHalf,.65f,edge.y-w.BoardHalf))<.04f,"guardian coordinate uses mapped cell");
             w.Guardian.Drive(Vector2.one,true,.1f);
-            Check(w.Guardian.Actor.position.x<=4.621f && w.Guardian.Actor.position.z<=4.621f,"largest-board bounds");
+            Check(Mathf.Abs(w.Guardian.Actor.position.x)<=w.BoardLimit+.001f && Mathf.Abs(w.Guardian.Actor.position.z)<=w.BoardLimit+.001f,"largest-board bounds");
             w.Guardian.End();yield return WaitFor(w,true);Stable(w);
             w.StartRange();while(w.Range.Transitioning)yield return null;
-            Check(w.Range.Targets.GetLength(0)==10 && w.Range.Remaining==w.PlayableCellCount,"range uses mapped targets");
+            Check(w.Range.Targets.GetLength(0)==w.BoardSize && w.Range.Remaining==w.PlayableCellCount,"range uses mapped targets");
             yield return new WaitForSeconds(.22f);
             edge=LastPlayable(w.board);var target=w.Range.Targets[edge.x,edge.y];
             Check(w.Range.FireAtScreen(Camera.main.WorldToScreenPoint(target.transform.position)),"shoot last cell");

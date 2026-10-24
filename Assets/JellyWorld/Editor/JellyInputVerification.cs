@@ -22,6 +22,7 @@ public static class JellyInputVerification
     static IEnumerator Verify(JellyWorld w)
     {
         w.StartChallenge();w.level=12;w.NewGame();yield return null;
+        int startingMoves=w.moves;
         Vector2Int a,b;w.board.FindMove(out a,out b);
         var source=w.tiles[a.x,a.y];var destination=w.tiles[b.x,b.y];
         Vector3 target=source.target;
@@ -29,7 +30,7 @@ public static class JellyInputVerification
         destination.transform.localPosition=destination.target+Vector3.up*4;destination.FallTo(destination.target);
         w.busy=true;
         Check(w.RequestDragSwap(source,destination) && w.HasBufferedSwap,"accepts drag while falling");
-        Check(w.moves==35,"buffering does not spend a move");
+        Check(w.moves==startingMoves,"buffering does not spend a move");
         Check(Mathf.Abs(JellyTile.FallDuration(4)-.5f)<.001f,"balanced acceleration timing");
         yield return new WaitForSeconds(.09f);
         float travelled=4-(source.transform.localPosition.y-target.y);
@@ -42,7 +43,7 @@ public static class JellyInputVerification
         w.busy=false;yield return null;
         if(source!=null && source.IsFalling)Check(w.HasBufferedSwap,"waits for actual landing");
         yield return Settle(w);
-        Check(w.moves==34 && w.score>=180,"buffered legal swap executes once after landing");
+        Check(w.moves==startingMoves-1 && w.score>=180,"buffered legal swap executes once after landing");
         for(int x=0;x<w.BoardSize;x++)for(int y=0;y<w.BoardSize;y++) {
             if(w.IsPlayableCell(x,y))Check(w.tiles[x,y]!=null && w.tiles[x,y].color==w.board.Cells[x,y],"model and view stay synchronized");
             else Check(w.tiles[x,y]==null && w.board.Cells[x,y]==JellyBoard.Blocked,"map holes stay empty");
@@ -51,7 +52,7 @@ public static class JellyInputVerification
         w.busy=true;Check(w.RequestDragSwap(source,destination),"buffers before elimination");
         w.StartCoroutine(w.Resolve(new HashSet<Vector2Int>{a},false));
         yield return Settle(w);
-        Check(w.moves==35 && !w.HasBufferedSwap,"deleted source cancels instead of swapping its replacement");
+        Check(w.moves==startingMoves && !w.HasBufferedSwap,"deleted source cancels instead of swapping its replacement");
         w.NewGame();w.board.FindMove(out a,out b);w.busy=true;w.RequestDragSwap(w.tiles[a.x,a.y],w.tiles[b.x,b.y]);
         w.NewGame();Check(!w.HasBufferedSwap && !w.busy,"new round clears gestures");
         w.score=0;w.ShowLevelSelect();
