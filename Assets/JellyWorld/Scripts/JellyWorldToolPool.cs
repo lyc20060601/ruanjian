@@ -8,34 +8,28 @@ namespace JellyWorldGame
         readonly Image[] poolCards=new Image[5];
         readonly Text[] poolCounts=new Text[5];
         static readonly string[] poolNames={"果冻锤","十字星","洗牌","守护者","糖弹靶场"};
-        static readonly string[] poolDetails={"消除一格","消除整行整列","重新排列棋盘","选择落点后操控踩踏","切换到靶场，射击消除"};
+        static readonly string[] poolDetails={"消除一格","消除整行整列","重新排列棋盘","选择落点，操控踩踏","进入靶场，射击消除"};
         void BuildToolPool(Transform parent)
         {
-            var outer=Panel("Tool pool frame",parent,new Vector2(526,0),new Vector2(444,750),new Color(.45f,.70f,.69f));
-            var tray=Panel("Tool pool",outer.transform,Vector2.zero,new Vector2(430,736),new Color(.96f,.97f,.94f)).transform;
-            Label("Pool title",tray,"道具池",new Vector2(-94,322),new Vector2(184,44),29,Ink);
-            Label("Pool count",tray,"5",new Vector2(176,322),new Vector2(45,40),22,Purple,TextAnchor.MiddleRight,true);
+            var tray=Card("Tool pool",parent,new Vector2(603,-137),new Vector2(302,488),Paper).transform;
+            Label("Pool title",tray,"旅途道具",new Vector2(0,209),new Vector2(254,38),23,Ink,TextAnchor.MiddleLeft,true);
             for(int i=0;i<5;i++) {
-                int index=i;float y=231-i*115;
-                var card=Panel("Tool card "+i,tray,new Vector2(0,y),new Vector2(392,102),Color.white);
-                poolCards[i]=card;
-                var b=card.gameObject.AddComponent<Button>();b.targetGraphic=card;b.navigation=new Navigation{mode=Navigation.Mode.None};
-                b.onClick.AddListener(()=>{Tone(700,.04f);SelectPoolTool(index);});
-                var colors=b.colors;colors.highlightedColor=new Color(.90f,.98f,.96f);colors.pressedColor=new Color(.78f,.90f,.89f);b.colors=colors;
-                var iconBg=Panel("Icon inset",card.transform,new Vector2(-143,0),new Vector2(86,86),new Color(.93f,.95f,.97f));
-                var icon=Rect("Tool icon "+i,iconBg.transform,Vector2.zero,new Vector2(83,83)).gameObject.AddComponent<Image>();
-                var feedback=card.gameObject.AddComponent<JellyButtonFeedback>();feedback.world=this;feedback.icon=icon.rectTransform;
+                int index=i;float y=144-i*76;
+                var card=Panel("Tool card "+i,tray,new Vector2(0,y),new Vector2(270,68),Color.white);poolCards[i]=card;
+                var button=card.gameObject.AddComponent<Button>();button.targetGraphic=card;button.navigation=new Navigation{mode=Navigation.Mode.None};
+                button.onClick.AddListener(()=>{PlaySound(JellySound.Click,.45f);SelectPoolTool(index);});
+                var icon=Rect("Tool icon "+i,card.transform,new Vector2(-97,0),new Vector2(59,59)).gameObject.AddComponent<Image>();
                 icon.sprite=toolIcons!=null && i<toolIcons.Length?toolIcons[i]:null;icon.preserveAspect=true;icon.raycastTarget=false;
-                Label("Tool name "+i,card.transform,poolNames[i],new Vector2(6,22),new Vector2(188,36),23,Ink);
-                Label("Tool detail "+i,card.transform,poolDetails[i],new Vector2(31,-22),new Vector2(238,30),16,new Color(.44f,.44f,.52f));
-                var badge=Panel("Quantity badge",card.transform,new Vector2(155,23),new Vector2(53,32),new Color(.90f,.87f,.98f));
-                poolCounts[i]=Label("Quantity "+i,badge.transform,"",Vector2.zero,new Vector2(51,31),20,Purple,TextAnchor.MiddleCenter,true);
+                var feedback=card.gameObject.AddComponent<JellyButtonFeedback>();feedback.world=this;feedback.icon=icon.rectTransform;
+                Label("Tool name "+i,card.transform,poolNames[i],new Vector2(12,14),new Vector2(135,27),19,Ink);
+                Label("Tool detail "+i,card.transform,"",new Vector2(32,-17),new Vector2(173,25),15,new Color(.42f,.48f,.48f));
+                poolCounts[i]=Label("Quantity "+i,card.transform,"",new Vector2(107,14),new Vector2(39,28),17,Sage,TextAnchor.MiddleRight,true);
             }
-            toolText=Label("Tool state",tray,"选择道具",new Vector2(0,-329),new Vector2(386,59),16,Ink,TextAnchor.MiddleCenter);
+            toolText=Label("Tool state",tray,"",new Vector2(0,-212),new Vector2(266,44),15,Ink,TextAnchor.MiddleCenter);
         }
         public void SelectPoolTool(int index)
         {
-            if(index<0 || index>4 || mode!="play" || busy || paused)return;
+            if(index<0 || index>4 || mode!="play" || busy || paused || !RequireTool(index))return;
             if(index<3)ChooseTool(index);
             else if(index==3)SummonGuardian();
             else StartRange();
@@ -46,12 +40,16 @@ namespace JellyWorldGame
             for(int i=0;i<5;i++) {
                 if(poolCounts[i]==null)continue;
                 int count=i<3?charges[i]:i==3?guardianCharges:rangeCharges;
-                poolCounts[i].text=InfiniteMode?"∞":count.ToString();
+                bool unlocked=IsToolUnlocked(i);
+                poolCounts[i].text=!unlocked?"—":InfiniteMode?"∞":count.ToString();
+                var detail=poolCards[i].transform.Find("Tool detail "+i).GetComponent<Text>();
+                detail.text=unlocked?poolDetails[i]:"通过第 "+(JellyJourney.ToolUnlockLevel(i)-1)+" 关解锁";
+                poolCards[i].transform.Find("Tool icon "+i).GetComponent<Image>().color=unlocked?Color.white:new Color(1,1,1,.35f);
                 bool chosen=i<2 && activeTool==i || i==3 && ChoosingLanding || ActingTool==i;
-                poolCards[i].GetComponent<Button>().interactable=!busy && !paused && (InfiniteMode || count>0);
-                poolCards[i].color=chosen?new Color(.79f,.96f,.88f):!InfiniteMode && count<=0?new Color(.91f,.91f,.92f):Color.white;
+                poolCards[i].GetComponent<Button>().interactable=unlocked && !busy && !paused && (InfiniteMode || count>0);
+                poolCards[i].color=chosen?new Color(.79f,.91f,.85f):!unlocked || !InfiniteMode && count<=0?new Color(.89f,.92f,.88f):Color.white;
             }
-            if(toolText!=null)toolText.text=ActingTool>=0?poolNames[ActingTool]+" · 使用中":ChoosingLanding?"点击棋盘选择落点":activeTool>=0?"点击棋盘使用 · 再点可取消":InfiniteMode?"选择道具":ObjectiveSummary();
+            if(toolText!=null)toolText.text=ActingTool>=0?poolNames[ActingTool]+" · 使用中":ChoosingLanding?"点击棋盘选择落点":activeTool>=0?"点击棋盘使用 · 再点可取消":InfiniteMode?"全道具开放 · 自由探索":"每局补满 · 使用不消耗步数";
         }
     }
 }

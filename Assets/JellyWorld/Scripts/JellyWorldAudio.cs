@@ -53,18 +53,21 @@ namespace JellyWorldGame
             if(resume){paused=true;ResetBoardGesture();Time.timeScale=0;if(Guardian!=null)Guardian.SyncCursor();if(Range!=null)Range.SyncCursor();}
             ClearUIChildren(modal);modal.gameObject.SetActive(true);
             Panel("Audio veil",modal,Vector2.zero,new Vector2(6000,4000),new Color(.12f,.16f,.24f,.48f));
-            var card=Panel("Audio settings card",modal,Vector2.zero,new Vector2(650,444),new Color(.98f,.99f,1)).transform;
-            Label("Audio heading",card,"音效设置",new Vector2(0,158),new Vector2(558,50),34,Ink);
-            AddVolumeSlider(card,"界面音量",49,uiVolume,value=>{uiVolume=value;StoreAudioVolumes();});
-            AddVolumeSlider(card,"游戏音量",-32,gameVolume,value=>{gameVolume=value;StoreAudioVolumes();});
-            var toggle=Button("Mute audio",card,sound?"音效：开":"音效：关",new Vector2(-146,-125),new Vector2(248,50),new Color(.85f,.93f,.91f),Ink,()=>{
+            var card=Panel("Audio settings card",modal,Vector2.zero,new Vector2(650,560),new Color(.98f,.99f,1)).transform;
+            Label("Audio heading",card,"舒适设置",new Vector2(0,222),new Vector2(558,50),34,Ink);
+            AddVolumeSlider(card,"界面音量",112,uiVolume,value=>{uiVolume=value;StoreAudioVolumes();});
+            AddVolumeSlider(card,"游戏音量",30,gameVolume,value=>{gameVolume=value;StoreAudioVolumes();});
+            var effects=Button("Reduced effects",card,ReducedEffects?"简洁特效：开":"简洁特效：关",new Vector2(0,-65),new Vector2(540,50),new Color(.89f,.93f,.88f),Ink,()=>{},21);
+            effects.onClick.AddListener(()=>{SetReducedEffects(!ReducedEffects);effects.GetComponentInChildren<Text>().text=ReducedEffects?"简洁特效：开":"简洁特效：关";});
+            Label("Effects description",card,"减少碎片数量，保留操作与消除反馈",new Vector2(0,-107),new Vector2(540,27),16,Sage,TextAnchor.MiddleCenter);
+            var toggle=Button("Mute audio",card,sound?"音效：开":"音效：关",new Vector2(-146,-157),new Vector2(248,50),new Color(.85f,.93f,.91f),Ink,()=>{
                 sound=!sound;PlayerPrefs.SetInt("JellyWorld.Sound",sound?1:0);PlayerPrefs.Save();
                 audioToggleLabel.text=sound?"音效：开":"音效：关";
                 if(!sound && soundVoices!=null)foreach(var voice in soundVoices)voice.Stop();
             },21);
             audioToggleLabel=toggle.GetComponentInChildren<Text>();
-            Button("Preview audio",card,"试听碎冰",new Vector2(146,-125),new Vector2(248,50),new Color(.85f,.90f,.99f),Ink,()=>PlaySound(JellySound.IceBreak,.8f),21);
-            Button("Close audio settings",card,resume?"返回游戏":"返回",new Vector2(0,-188),new Vector2(280,46),Purple,Color.white,()=>{
+            Button("Preview audio",card,"试听碎冰",new Vector2(146,-157),new Vector2(248,50),new Color(.85f,.90f,.99f),Ink,()=>PlaySound(JellySound.IceBreak,.8f),21);
+            Button("Close audio settings",card,resume?"返回游戏":"返回",new Vector2(0,-230),new Vector2(280,46),Purple,Color.white,()=>{
                 modal.gameObject.SetActive(false);if(resume){paused=false;Time.timeScale=1;if(Guardian!=null)Guardian.SyncCursor();if(Range!=null)Range.SyncCursor();}
             },21);
         }

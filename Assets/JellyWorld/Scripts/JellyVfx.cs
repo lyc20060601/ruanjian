@@ -7,7 +7,8 @@ namespace JellyWorldGame
         public static void IceBreak(JellyWorld w,Transform parent,Vector3 p,Vector3 normal)
         {
             Quaternion basis=Quaternion.FromToRotation(Vector3.up,normal);
-            for(int i=0;i<8;i++) {
+            int count=Mathf.Min(w.ReducedEffects?3:6,Mathf.Max(0,120-parent.childCount));
+            for(int i=0;i<count;i++) {
                 float angle=i*Mathf.PI*.25f;Vector3 radial=basis*new Vector3(Mathf.Cos(angle),0,Mathf.Sin(angle));
                 var shard=w.Shape("Broken ice shell",parent,Vector3.zero,new Vector3(.18f,.27f,.09f),w.iceShell);
                 shard.GetComponent<MeshFilter>().sharedMesh=w.fractureMesh;shard.transform.position=p+radial*.3f;
@@ -19,7 +20,8 @@ namespace JellyWorldGame
         public static void Shatter(JellyWorld w,Transform parent,Vector3 p,int color,Vector3 normal)
         {
             var basis=Quaternion.FromToRotation(Vector3.up,normal);
-            for(int i=0;i<15;i++) {
+            int count=Mathf.Min(w.ReducedEffects?3:6,Mathf.Max(0,120-parent.childCount));
+            for(int i=0;i<count;i++) {
                 float angle=i*2.39996f;
                 Vector3 radial=basis*new Vector3(Mathf.Cos(angle),0,Mathf.Sin(angle));
                 var g=new GameObject(i<10?"Fractured jelly shard":"Sugar droplet");
@@ -27,16 +29,15 @@ namespace JellyWorldGame
                 g.AddComponent<MeshFilter>().sharedMesh=i<10?w.fractureMesh:w.jellyMesh;
                 g.AddComponent<MeshRenderer>().sharedMaterial=i==14?w.white:w.candy[color];
                 g.GetComponent<Renderer>().shadowCastingMode=ShadowCastingMode.Off;
-                float size=i<10?Random.Range(.16f,.30f):Random.Range(.05f,.10f);
+                float size=Random.Range(.10f,.20f);
                 g.transform.localScale=new Vector3(size,size*Random.Range(.55f,1.3f),size);
                 g.transform.rotation=Random.rotation;
                 var d=g.AddComponent<JellyDebris>();
-                d.velocity=radial*Random.Range(1.4f,3.4f)+normal*Random.Range(1.8f,3.9f);
+                d.velocity=radial*Random.Range(.9f,2.1f)+normal*Random.Range(1.2f,2.4f);
                 d.gravity=normal.y>.8f?Vector3.down*10:Vector3.down*7-normal*2;
-                d.spin=Random.insideUnitSphere*540;d.life=Random.Range(.65f,1.1f);
+                d.spin=Random.insideUnitSphere*270;d.life=Random.Range(.4f,.65f);
                 d.planePoint=p-normal*.25f;d.planeNormal=normal;
             }
-            Ring(w,parent,p+normal*.1f,normal,.8f,.45f,new Color(1,.96f,.75f,.75f));
         }
         public static GameObject Ring(JellyWorld w,Transform parent,Vector3 p,Vector3 normal,float radius,float life,Color color)
         {

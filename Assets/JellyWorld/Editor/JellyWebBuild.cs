@@ -13,7 +13,7 @@ public static class JellyWebBuild
             return;
         }
         Directory.CreateDirectory("Builds/WebGL");
-        PlayerSettings.WebGL.compressionFormat=WebGLCompressionFormat.Disabled;
+        PlayerSettings.WebGL.compressionFormat=WebGLCompressionFormat.Gzip;
         PlayerSettings.WebGL.dataCaching=true;
         PlayerSettings.defaultScreenWidth=1600;PlayerSettings.defaultScreenHeight=900;
         var result=BuildPipeline.BuildPlayer(new BuildPlayerOptions {

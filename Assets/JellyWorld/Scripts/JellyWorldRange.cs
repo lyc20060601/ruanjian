@@ -39,6 +39,7 @@ namespace JellyWorldGame
         public void StartRange()
         {
             if(mode!="play" || busy || paused)return;
+            if(!RequireTool(4))return;
             if(!InfiniteMode && rangeCharges<=0){Notice("本局道具已用完");return;}
             CancelLandingChoice();Deselect();ClearHints();activeTool=-1;pointerDown=false;ClearEffects();
             if(!InfiniteMode)rangeCharges--;

@@ -52,6 +52,7 @@ namespace JellyWorldGame
         {
             if(mode!="play" || paused || busy) return;
             if(ChoosingLanding){CancelLandingChoice();return;}
+            if(!RequireTool(3))return;
             if(!InfiniteMode && guardianCharges<=0) {Notice("守护者正在休息，下一局可再次召唤");return;}
             Deselect();ClearHints();activeTool=-1;pointerDown=false;ChoosingLanding=true;
             Notice("选择守护者落点：点击一颗果冻 · ESC 或再点召唤可取消");UpdateHUD();

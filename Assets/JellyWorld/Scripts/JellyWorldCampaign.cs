@@ -118,6 +118,7 @@ namespace JellyWorldGame
         }
         void FinishLevel(bool win)
         {
+            int previousUnlocked=JellyProgress.Unlocked;
             mode="result";PlaySound(win?JellySound.Win:JellySound.Lose,.6f);int stars=0,bonus=0;
             if(win) {
                 stars=1+(moves>=Mathf.CeilToInt(LevelSpec.Moves*.2f)?1:0)+(moves>=Mathf.CeilToInt(LevelSpec.Moves*.45f)?1:0);
@@ -125,18 +126,14 @@ namespace JellyWorldGame
             }
             PlayerPrefs.SetInt("JellyWorld.Best",Mathf.Max(score,PlayerPrefs.GetInt("JellyWorld.Best",0)));PlayerPrefs.Save();UpdateHUD();
             string detail=win?new string('★',stars)+new string('☆',3-stars)+"\n得分 "+score+"（剩余步数奖励 +"+bonus+"）":ObjectiveSummary()+"\n本局得分 "+score;
+            if(win) {var unlocked=JellyJourney.UnlockMessage(previousUnlocked,JellyProgress.Unlocked);detail+="\n"+(unlocked.Length>0?unlocked:JellyJourney.RankName+" · ★ "+JellyJourney.TotalStars+" / 36");}
             bool final=level==JellyLevels.All.Length;
             ShowDialog(win?"第 "+level+" 关完成":"步数已用完",LevelSpec.Name,detail,win?(final?"返回关卡":"下一关"):"重试",
                 ()=>{if(win){if(final)ShowLevelSelect();else StartLevel(level+1);}else NewGame();},true,ShowLevelSelect,"关卡列表");
         }
         void BuildCampaignUI(Transform parent)
         {
-            levelsUI=Rect("Level selection",parent,Vector2.zero,new Vector2(1600,900));
-            Panel("Level backdrop",levelsUI,Vector2.zero,new Vector2(2400,1500),new Color(.90f,.95f,.98f,.97f));
-            Label("Level title",levelsUI,"关卡",new Vector2(-610,375),new Vector2(300,70),45,Ink);
-            Button("Level back",levelsUI,"主页",new Vector2(669,379),new Vector2(156,52),Color.white,Ink,ShowMenu,22);
-            Button("Level ranking",levelsUI,"排行榜",new Vector2(480,379),new Vector2(170,52),Color.white,Ink,ShowLeaderboard,22);
-            levelContent=Rect("Level cards",levelsUI,Vector2.zero,new Vector2(1550,700));levelsUI.gameObject.SetActive(false);
+            BuildJourneyUI(parent);
             ranksUI=Rect("Local leaderboard",parent,Vector2.zero,new Vector2(1600,900));
             Panel("Rank backdrop",ranksUI,Vector2.zero,new Vector2(2400,1500),new Color(.94f,.96f,.98f,.98f));
             Label("Rank title",ranksUI,"本地排行榜",new Vector2(-534,376),new Vector2(430,65),40,Ink);
@@ -158,29 +155,7 @@ namespace JellyWorldGame
         public void ShowLevelSelect()
         {
             ShowMenu();mode="levels";menuUI.gameObject.SetActive(false);hero.gameObject.SetActive(false);levelsUI.gameObject.SetActive(true);
-            ClearUIChildren(levelContent);
-            for(int i=0;i<JellyLevels.All.Length;i++) {
-                var c=JellyLevels.All[i];bool open=c.Id<=JellyProgress.Unlocked;
-                Vector2 p=new Vector2(-561+(i%4)*374,220-(i/4)*235);
-                var card=Panel("Level "+c.Id,levelContent,p,new Vector2(348,208),open?Color.white:new Color(.83f,.86f,.90f));
-                Label("Level number",card.transform,c.Id.ToString("00")+"   "+c.Name,new Vector2(-49,64),new Vector2(208,42),23,open?Ink:new Color(.47f,.50f,.56f));
-                Label("Level dimensions",card.transform,c.MapName+"  ·  "+c.CellCount+" 格\n"+c.Size+"×"+c.Size+" · "+c.Colors+" 色 · "+c.Moves+" 步",new Vector2(-49,18),new Vector2(208,46),15,Ink);
-                var preview=Rect("Map preview",card.transform,new Vector2(120,45),new Vector2(76,76));
-                float cell=68f/c.Size;
-                for(int row=0;row<c.Size;row++)for(int x=0;x<c.Size;x++)if(c.MapRows[row][x]=='#')
-                    Panel("Map cell",preview,new Vector2((x-(c.Size-1)*.5f)*cell,((c.Size-1)*.5f-row)*cell),Vector2.one*(cell-.8f),open?new Color(.53f,.39f,.82f):new Color(.61f,.64f,.69f));
-                var goals=new System.Collections.Generic.List<string>();
-                if(c.Frost>0)goals.Add("清冰 "+c.Frost);
-                if(c.ColorA>=0)goals.Add(JellyLevels.ColorNames[c.ColorA]+" "+c.AmountA);
-                if(c.ColorB>=0)goals.Add(JellyLevels.ColorNames[c.ColorB]+" "+c.AmountB);
-                string goal=goals.Count==0?"积分挑战":string.Join(" · ",goals.ToArray());
-                Label("Level goal",card.transform,goal+"  /  "+c.Score+" 分",new Vector2(0,-18),new Vector2(306,35),17,Purple);
-                int n=c.Id;var button=card.gameObject.AddComponent<Button>();button.targetGraphic=card;button.interactable=open;
-                button.navigation=new Navigation{mode=Navigation.Mode.None};button.onClick.AddListener(()=>{PlaySound(JellySound.Click,.45f);StartLevel(n);});
-                button.gameObject.AddComponent<JellyButtonFeedback>().world=this;
-                int stars=JellyProgress.Stars(c.Id);
-                Label("Level progress",card.transform,open?(stars>0?new string('★',stars)+new string('☆',3-stars)+"  "+JellyProgress.Best(c.Id)+"分":"未通关"):"完成前一关解锁",new Vector2(0,-66),new Vector2(306,36),19,Ink);
-            }
+            RenderJourneyChapter((JellyProgress.Unlocked-1)/4);
         }
         public void ShowLeaderboard()
         {
