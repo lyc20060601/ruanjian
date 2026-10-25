@@ -32,7 +32,7 @@ namespace JellyWorldGame
             savedPosition=cam.transform.position;savedRotation=cam.transform.rotation;
             savedFov=cam.fieldOfView;savedSize=cam.orthographicSize;savedNear=cam.nearClipPlane;
             savedOrtho=cam.orthographic;savedBackground=cam.backgroundColor;savedFog=RenderSettings.fog;
-            mainScene=SceneManager.GetActiveScene();Ammo=16;Hits=0;Remaining=world.BoardSize*world.BoardSize;Targets=new JellyRangeTarget[world.BoardSize,world.BoardSize];pendingShots=0;nextShot=0;recoil=0;
+            mainScene=SceneManager.GetActiveScene();Ammo=16;Hits=0;Remaining=world.PlayableCellCount;Targets=new JellyRangeTarget[world.BoardSize,world.BoardSize];pendingShots=0;nextShot=0;recoil=0;
             Active=true;Transitioning=true;ending=false;StartCoroutine(Enter());
         }
         IEnumerator Fade(float from,float to,float seconds)
@@ -71,12 +71,13 @@ namespace JellyWorldGame
             world.Shape("Target wall rim",root,new Vector3(0,4.45f,10.70f),new Vector3(10.07f,7.94f,.18f),world.gold);
             world.Shape("Target wall inset",root,new Vector3(0,4.45f,10.52f),new Vector3(9.78f,7.66f,.22f),world.plum);
             for(int x=0;x<world.BoardSize;x++)for(int y=0;y<world.BoardSize;y++) {
+                if(!world.IsPlayableCell(x,y))continue;
                 var p=new Vector3((x-world.BoardHalf)*(9.04f/world.BoardSize),1.35f+y*(6.96f/world.BoardSize),10.02f);
                 world.Shape("Target socket",root,p+Vector3.forward*.35f,new Vector3(8.32f/world.BoardSize,6.56f/world.BoardSize,.12f),world.cream);
                 if(world.board.Cells[x,y]>=0) {
                     var g=world.CreateRangeTarget(root,x,y,p);
                     Targets[x,y]=g.GetComponent<JellyRangeTarget>();
-                } else Remaining--;
+                }
             }
             for(int side=-1;side<=1;side+=2) {
                 world.Shape("Candy pillar",root,new Vector3(side*5.8f,4.5f,10.2f),new Vector3(.75f,9,.75f),world.mint);

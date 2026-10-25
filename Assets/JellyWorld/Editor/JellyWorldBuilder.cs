@@ -204,7 +204,7 @@ public static class JellyWorldBuilder
     [MenuItem("Jelly World/Verify board rules")]
     public static void Verify()
     {
-        int checkedMoves=0;
+        int checkedMoves=0,checkedMaps=0;
         for(int seed=0;seed<200;seed++) {
             var b=new JellyBoard(seed);if(b.Matches().Count!=0)throw new Exception("Initial match at seed "+seed);
             Vector2Int a,c;if(!b.FindMove(out a,out c))throw new Exception("Dead board");
@@ -217,6 +217,29 @@ public static class JellyWorldBuilder
         for(int x=0;x<8;x++)for(int y=0;y<8;y++)cross.Cells[x,y]=(x+y)%5;
         for(int k=1;k<=3;k++){cross.Cells[k,2]=4;cross.Cells[2,k]=4;}
         if(cross.Matches().Count!=5)throw new Exception("Cross should count each cell once");
-        Debug.Log("JELLY RULES PASS: 200 seeds, match-free opening, legal hint, reversible swap, cross union. Moves: "+checkedMoves);
+        foreach(var level in JellyLevels.All) {
+            var mask=level.CreateMask();var seen=new bool[level.Size,level.Size];var queue=new Queue<Vector2Int>();
+            for(int y=0;y<level.Size && queue.Count==0;y++)for(int x=0;x<level.Size;x++)if(mask[x,y]){queue.Enqueue(new Vector2Int(x,y));seen[x,y]=true;break;}
+            int connected=0;Vector2Int[] directions={Vector2Int.right,Vector2Int.left,Vector2Int.up,Vector2Int.down};
+            while(queue.Count>0) {
+                var p=queue.Dequeue();connected++;
+                foreach(var direction in directions) {
+                    var n=p+direction;
+                    if(n.x<0 || n.y<0 || n.x>=level.Size || n.y>=level.Size || !mask[n.x,n.y] || seen[n.x,n.y])continue;
+                    seen[n.x,n.y]=true;queue.Enqueue(n);
+                }
+            }
+            if(connected!=level.CellCount)throw new Exception("Disconnected map at level "+level.Id);
+            for(int seed=0;seed<30;seed++) {
+                var b=new JellyBoard(level.Id*1000+seed,level.Size,level.Colors,mask);
+                if(b.PlayableCount!=level.CellCount)throw new Exception("Cell count mismatch at level "+level.Id);
+                if(b.Matches().Count!=0)throw new Exception("Initial map match at level "+level.Id+", seed "+seed);
+                Vector2Int a,c;if(!b.FindMove(out a,out c))throw new Exception("Dead map at level "+level.Id+", seed "+seed);
+                for(int x=0;x<level.Size;x++)for(int y=0;y<level.Size;y++)
+                    if(mask[x,y] ? b.Cells[x,y]<0 : b.Cells[x,y]!=JellyBoard.Blocked)throw new Exception("Mask mismatch at level "+level.Id);
+                checkedMaps++;
+            }
+        }
+        Debug.Log("JELLY RULES PASS: 200 square seeds and "+checkedMaps+" shaped boards; connected maps, match-free openings, legal hints, reversible swaps and cross union. Moves: "+checkedMoves);
     }
 }

@@ -123,7 +123,7 @@ namespace JellyWorldGame
             RegisterClear(x,y,tile.color);
             Burst(tile.transform.position,tile.color);
             tile.gameObject.SetActive(false);Destroy(tile.gameObject);
-            tiles[x,y]=null;board.Cells[x,y]=-1;score+=60;
+            tiles[x,y]=null;board.Cells[x,y]=JellyBoard.Empty;score+=60;
             return true;
         }
         public void GuardianImpact(bool heavy)
@@ -133,18 +133,21 @@ namespace JellyWorldGame
         void CollapseBoard()
         {
             for(int x=0;x<BoardSize;x++) {
-                int dest=0;
-                for(int y=0;y<BoardSize;y++) if(board.Cells[x,y]>=0) {
+                var slots=new System.Collections.Generic.List<int>();
+                for(int y=0;y<BoardSize;y++)if(IsPlayableCell(x,y))slots.Add(y);
+                int destIndex=0;
+                foreach(int y in slots)if(board.Cells[x,y]>=0) {
+                    int dest=slots[destIndex++];
                     if(dest!=y) {
-                        board.Cells[x,dest]=board.Cells[x,y];board.Cells[x,y]=-1;
+                        board.Cells[x,dest]=board.Cells[x,y];board.Cells[x,y]=JellyBoard.Empty;
                         tiles[x,dest]=tiles[x,y];tiles[x,y]=null;
                         tiles[x,dest].y=dest;tiles[x,dest].FallTo(Pos(x,dest));
                     }
-                    dest++;
                 }
-                for(int y=dest;y<BoardSize;y++) {
+                for(int i=destIndex;i<slots.Count;i++) {
+                    int y=slots[i],rank=i-destIndex;board.Cells[x,y]=JellyBoard.Empty;
                     board.Cells[x,y]=board.Next();var tile=Spawn(x,y,board.Cells[x,y],false);
-                    tile.transform.localPosition=new Vector3(x-BoardHalf,BoardHalf+1.3f+y-dest,-.20f);
+                    tile.transform.localPosition=new Vector3(x-BoardHalf,BoardHalf+1.3f+rank*.98f,-.20f);
                     tile.FallTo(Pos(x,y),0,true);
                 }
             }
@@ -162,27 +165,29 @@ namespace JellyWorldGame
         IEnumerator RefillGuardianBoard()
         {
             int missing=0;
-            for(int x=0;x<BoardSize;x++)for(int y=0;y<BoardSize;y++)if(board.Cells[x,y]<0)missing++;
+            for(int x=0;x<BoardSize;x++)for(int y=0;y<BoardSize;y++)if(IsPlayableCell(x,y) && board.Cells[x,y]==JellyBoard.Empty)missing++;
             if(missing==0)yield break;
             Notice("补位 "+missing+" 格");
             // Leave the damage visible after the camera has returned before anything moves.
             yield return new WaitForSeconds(.5f);
-            int[] firstEmpty=new int[BoardSize];
+            var emptySlots=new System.Collections.Generic.List<int>[BoardSize];
             for(int x=0;x<BoardSize;x++) {
-                int dest=0;
-                for(int y=0;y<BoardSize;y++)if(board.Cells[x,y]>=0) {
+                var slots=new System.Collections.Generic.List<int>();
+                for(int y=0;y<BoardSize;y++)if(IsPlayableCell(x,y))slots.Add(y);
+                int destIndex=0;
+                foreach(int y in slots)if(board.Cells[x,y]>=0) {
+                    int dest=slots[destIndex++];
                     if(dest!=y) {
-                        board.Cells[x,dest]=board.Cells[x,y];board.Cells[x,y]=-1;
+                        board.Cells[x,dest]=board.Cells[x,y];board.Cells[x,y]=JellyBoard.Empty;
                         var tile=tiles[x,y];tiles[x,dest]=tile;tiles[x,y]=null;tile.y=dest;
                         tile.FallTo(Pos(x,dest));
                     }
-                    dest++;
                 }
-                firstEmpty[x]=dest;
+                emptySlots[x]=slots.GetRange(destIndex,slots.Count-destIndex);
             }
             Notice("补位中");
-            for(int x=0;x<BoardSize;x++)for(int y=firstEmpty[x];y<BoardSize;y++) {
-                int rank=y-firstEmpty[x];board.Cells[x,y]=board.Next();
+            for(int x=0;x<BoardSize;x++)for(int i=0;i<emptySlots[x].Count;i++) {
+                int y=emptySlots[x][i],rank=i;board.Cells[x,y]=board.Next();
                 var tile=Spawn(x,y,board.Cells[x,y],false);
                 tile.transform.localPosition=new Vector3(x-BoardHalf,BoardHalf+1.3f+rank*.98f,-.20f);
                 tile.FallTo(Pos(x,y),0,true);

@@ -58,7 +58,7 @@ namespace JellyWorldGame
         public void SetRangeHUD(int ammo,int hits,int remaining,string hint=null)
         {
             rangeAmmo.text="糖弹  "+(InfiniteMode?"∞":ammo.ToString());
-            rangeHits.text="命中 "+hits+" / "+(BoardSize*BoardSize);
+            rangeHits.text="命中 "+hits+" / "+PlayableCellCount;
             rangeHint.text=hint??(InfiniteMode?"移动鼠标瞄准 · 按住左键发射 · Esc 暂停":ObjectiveSummary()+" · 按住左键发射");
         }
         public void AimRangeUI(Vector2 screen,bool overUI)
@@ -81,7 +81,7 @@ namespace JellyWorldGame
         {
             if(mode!="range" || board.Cells[x,y]<0)return false;
             var tile=tiles[x,y];if(tile!=null){RegisterClear(x,y,tile.color);tile.gameObject.SetActive(false);Destroy(tile.gameObject);}
-            tiles[x,y]=null;board.Cells[x,y]=-1;score+=60;return true;
+            tiles[x,y]=null;board.Cells[x,y]=JellyBoard.Empty;score+=60;return true;
         }
         public void RangePop(int color){PlaySound(JellySound.Shoot,.35f,1+color*.02f);}
         public void RangeHit(int color){PlaySound(JellySound.Pop,.50f,1+color*.02f);}
