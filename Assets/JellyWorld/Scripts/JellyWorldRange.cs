@@ -18,7 +18,7 @@ namespace JellyWorldGame
             Label("Range title",heading,"糖弹靶场",new Vector2(0,15),new Vector2(325,42),29,Ink);
             Label("Range subtitle",heading,"命中方块即可消除",new Vector2(0,-23),new Vector2(325,26),17,Purple);
             var stats=Panel("Range counters",rangeUI,new Vector2(0,382),new Vector2(600,77),new Color(.19f,.22f,.34f,.96f)).transform;
-            rangeAmmo=Label("Range ammo",stats,"",new Vector2(-144,0),new Vector2(263,52),28,new Color(.75f,1,.91f),TextAnchor.MiddleCenter);
+            rangeAmmo=Label("Range ammo",stats,"",new Vector2(-144,0),new Vector2(263,52),28,new Color(1,.89f,.66f),TextAnchor.MiddleCenter);
             rangeHits=Label("Range hits",stats,"",new Vector2(143,0),new Vector2(263,52),24,Color.white,TextAnchor.MiddleCenter);
             Button("Exit shooting range",rangeUI,"返回棋盘",new Vector2(654,376),new Vector2(186,54),new Color(1,1,1,.95f),Ink,()=>{if(Range!=null)Range.End();},21);
             Button("Pause shooting range",rangeUI,"暂停",new Vector2(470,376),new Vector2(130,54),new Color(1,1,1,.95f),Ink,TogglePause,20);

@@ -5,6 +5,7 @@
 | Ice textures | ambientCG Ice 001, CC0; `Assets/JellyWorld/Art/Downloaded/Ice001/SOURCE.md` |
 | Ice sounds | OpenGameArt “Ice spells”, bart / Stephan, CC0; `Assets/JellyWorld/Audio/Downloaded/ice-spells/SOURCE.md` |
 | UI and impact sounds | Kenney Interface Sounds, Impact Sounds, Digital Audio; CC0; source notes and original License.txt under `Assets/JellyWorld/Audio/Downloaded/` |
+| Studio reflection HDRI | Poly Haven Studio Small 09, Sergej Majboroda, CC0; `Assets/JellyWorld/Resources/StudioLighting/SOURCE.md` |
 | Repository fonts | Noto Sans SC, SIL Open Font License 1.1; `Assets/JellyWorld/Fonts/OFL.txt` and `SOURCE.md` |
 | Tool icons | Generated for this project using image_gen; prompts in `Assets/JellyWorld/Art/ToolIcons/Generation.md` |
 | Rounded cube | User-provided `Assets/Scenes/rounded_cube.glb`; original external source/license not recorded in the supplied project |

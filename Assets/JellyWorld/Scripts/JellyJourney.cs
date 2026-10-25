@@ -7,7 +7,7 @@ namespace JellyWorldGame
         static readonly int[] UnlockLevels = { 2, 4, 3, 6, 8 };
         static readonly int[] RankStars = { 0, 3, 9, 18, 27, 36 };
         public static readonly string[] ToolNames = { "果冻锤", "十字星", "洗牌", "守护者", "糖弹靶场" };
-        public static readonly string[] ChapterNames = { "云朵小径", "薄荷群岛", "星糖花园" };
+        public static readonly string[] ChapterNames = { "云朵小径", "蜜桃群岛", "星糖花园" };
         public static readonly string[] ChapterNotes = { "从一次轻轻的交换开始", "巧用道具，寻找自己的节奏", "让每一步，都离目标更近" };
         public static readonly string[] RankNames = { "初来旅人", "糖果学徒", "软糖探索家", "群岛漫游者", "星糖收藏家", "果冻大师" };
         public static int ToolUnlockLevel(int index) { return index>=0 && index<UnlockLevels.Length ? UnlockLevels[index] : int.MaxValue; }

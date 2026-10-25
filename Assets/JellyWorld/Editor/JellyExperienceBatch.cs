@@ -25,10 +25,13 @@ public static class JellyExperienceBatch
         EditorApplication.playModeStateChanged += StateChanged;
         EditorApplication.update += Watchdog;
     }
-    public static void Run()
+    public static void Run(){StartRun(false);}
+    public static void RunVisuals(){StartRun(true);}
+    static void StartRun(bool visualOnly)
     {
+        SessionState.SetBool(Key+".VisualOnly",visualOnly);
         JellyExperienceVerification.VerifyRules();
-        Directory.CreateDirectory("Captures/ComfortJourney");
+        Directory.CreateDirectory("Captures/CandyBalanced");
         SessionState.SetInt(Key, 1);
         EditorSceneManager.OpenScene("Assets/Scenes/JellyWorld.unity");
         EditorApplication.isPlaying = true;
@@ -77,7 +80,7 @@ public static class JellyExperienceBatch
         foreach(string key in intKeys) { if(present.Contains(key))PlayerPrefs.SetInt(key,int.Parse(saved[key]));else PlayerPrefs.DeleteKey(key); }
         foreach(string key in stringKeys) { if(present.Contains(key))PlayerPrefs.SetString(key,saved[key]);else PlayerPrefs.DeleteKey(key); }
         PlayerPrefs.Save();
-        File.WriteAllText("Captures/ComfortJourney/Verification.txt",(pass?"PASS: ":"FAIL: ")+message+"\n"+DateTime.Now.ToString("s"));
+        File.WriteAllText("Captures/CandyBalanced/Verification.txt",(pass?"PASS: ":"FAIL: ")+message+"\n"+DateTime.Now.ToString("s"));
         Debug.Log((pass?"COMFORT JOURNEY PASS: ":"COMFORT JOURNEY FAIL: ")+message);
         EditorApplication.isPlaying=false;
     }
@@ -93,7 +96,7 @@ public static class JellyExperienceBatch
             if(next is IEnumerator){stack.Push((IEnumerator)next);continue;}
             yield return next;
         }
-        Finish(true,"journey gates, replay stars, chapter navigation, fresh/returning profiles; campaign, buffered input, ice/audio and infinite regressions; rendered screenshots");
+        Finish(true,SessionState.GetBool(Key+".VisualOnly",false)?"visual capture and preview resource lifecycle checks":"journey gates, replay stars, chapter navigation, fresh/returning profiles; campaign, buffered input, ice/audio and infinite regressions; rendered screenshots");
     }
     static void Check(bool ok,string message){JellyExperienceVerification.Check(ok,message);}
     static bool Unlocked(int index){return (bool)typeof(JellyWorld).GetMethod("IsToolUnlocked").Invoke(world,new object[]{index});}
@@ -104,6 +107,27 @@ public static class JellyExperienceBatch
         ResetProfile(1);world.ShowMenu();yield return null;
         yield return Capture("01-home");
         yield return Capture("01-home-1280",1280,720);
+        var playButton=GameObject.Find("Continue journey");
+        var feedback=playButton.GetComponent<JellyButtonFeedback>();var surface=playButton.GetComponent<JellyUISurface>();
+        feedback.OnPointerDown(new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current));
+        yield return new WaitForSecondsRealtime(.15f);
+        Check(surface.FaceOffset < -2,"raised button face depresses on pointer down");
+        feedback.OnPointerUp(new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current));
+        yield return new WaitForSecondsRealtime(.3f);
+        Check(Mathf.Abs(surface.FaceOffset)<.1f,"button face returns after release");
+        var pointer=new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current);
+        feedback.OnPointerEnter(pointer);yield return new WaitForSecondsRealtime(.2f);
+        Check(surface.FaceOffset>.3f,"hover gently lifts active button");
+        yield return Capture("06-home-hover");
+        feedback.OnPointerExit(pointer);yield return new WaitForSecondsRealtime(.3f);
+        Check(Mathf.Abs(surface.FaceOffset)<.1f,"pointer exit clears elevation");
+        feedback.OnPointerEnter(pointer);yield return new WaitForSecondsRealtime(.1f);
+        playButton.SetActive(false);Check(Mathf.Abs(surface.FaceOffset)<.1f,"disable clears hover and press state");
+        playButton.SetActive(true);yield return null;
+        Check(Resources.Load<Cubemap>("StudioLighting/CandyStudio")!=null,"downloaded reflection map imports as cubemap");
+        world.ShowLevelSelect();yield return null;
+        yield return Capture("02-fresh-locked");yield return Capture("02-fresh-locked-1280",1280,720);
+        CheckPreviewTextures();world.ShowMenu();
         GameObject.Find("Continue journey").GetComponent<Button>().onClick.Invoke();yield return null;
         Check(world.mode=="play" && world.level==1,"home continues into first level");
         for(int i=0;i<5;i++)Check(!Unlocked(i),"fresh profile tools locked");
@@ -124,7 +148,9 @@ public static class JellyExperienceBatch
         world.ShowLevelSelect();yield return null;yield return Capture("02-chapter-one");
         GameObject.Find("Chapter tab 2").GetComponent<Button>().onClick.Invoke();yield return null;
         Check(GameObject.Find("Level 9")!=null && !GameObject.Find("Level 9").GetComponent<Button>().interactable,"late chapter preview stays locked");
-        yield return Capture("03-chapter-three");
+        yield return Capture("03-chapter-three");CheckPreviewTextures();
+        GameObject.Find("Chapter tab 1").GetComponent<Button>().onClick.Invoke();yield return null;
+        yield return Capture("03-chapter-two");CheckPreviewTextures();
         ResetProfile(8);
         PlayerPrefs.SetInt("JellyWorld.Campaign.Stars.1",3);PlayerPrefs.SetInt("JellyWorld.Campaign.Best.1",5678);
         const string priorRanks="{\"rows\":[{\"player\":\"Returning QA\",\"date\":\"2026-10-01\",\"level\":1,\"score\":5678,\"stars\":3}]}";
@@ -133,12 +159,16 @@ public static class JellyExperienceBatch
         Check(PlayerPrefs.GetString("JellyWorld.Campaign.Ranks")==priorRanks,"existing rankings unchanged");
         world.level=5;world.NewGame();yield return null;yield return Capture("04-board");
         yield return Capture("04-board-1280",1280,720);
+        world.ChooseTool(0);yield return null;yield return Capture("07-selected-tool");
+        world.ChooseTool(0);
+
         var effects=(Transform)typeof(JellyWorld).GetField("effects",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(world);
         for(int i=0;i<100;i++)JellyVfx.Shatter(world,effects,Vector3.zero,i%5,Vector3.back);
         Check(effects.childCount<=120,"large clears respect debris budget");world.ClearGuardianEffects();yield return null;
         world.SetReducedEffects(true);Check(PlayerPrefs.GetInt("JellyWorld.Comfort.ReducedEffects")==1,"comfort preference persisted");
         world.OpenAudioSettings();yield return null;yield return Capture("05-settings");
         world.TogglePause();
+        if(SessionState.GetBool(Key+".VisualOnly",false))yield break;
         world.StartInfinite();yield return null;for(int i=0;i<5;i++)Check(Unlocked(i),"infinite opens tools");
         world.score=0;world.ShowMenu();ResetProfile(12);
         var flags=BindingFlags.Static|BindingFlags.NonPublic;
@@ -146,6 +176,15 @@ public static class JellyExperienceBatch
         yield return (IEnumerator)typeof(JellyInputVerification).GetMethod("Verify",flags).Invoke(null,new object[]{world});
         yield return (IEnumerator)typeof(JellyFeelVerification).GetMethod("Verify",flags).Invoke(null,new object[]{world});
         yield return JellyInfiniteVerification.Run(world);
+    }
+    static void CheckPreviewTextures()
+    {
+        var previews=world.GetComponentsInChildren<RawImage>();int count=0;
+        foreach(var image in previews)if(image.name=="Map preview"){var texture=image.texture as RenderTexture;Check(texture!=null && texture.IsCreated(),"live 3D map thumbnail");count++;}
+        Check(count==4,"one live preview per visible level");
+        int owned=0;foreach(var texture in Resources.FindObjectsOfTypeAll<RenderTexture>())if(texture.name.StartsWith("Map diorama ") && texture.IsCreated())owned++;
+        Check(owned==4,"chapter switching releases previous render textures");
+        Check(GameObject.Find("Temporary map diorama")==null,"preview geometry cleaned up");
     }
     static IEnumerator Capture(string name,int width=1600,int height=900)
     {
@@ -158,7 +197,7 @@ public static class JellyExperienceBatch
             canvas.renderMode=RenderMode.ScreenSpaceCamera;canvas.worldCamera=camera;canvas.planeDistance=1;
             yield return null;Canvas.ForceUpdateCanvases();camera.Render();RenderTexture.active=rt;
             image.ReadPixels(new Rect(0,0,width,height),0,0);image.Apply();
-            File.WriteAllBytes("Captures/ComfortJourney/"+name+".png",image.EncodeToPNG());
+            File.WriteAllBytes("Captures/CandyBalanced/"+name+".png",image.EncodeToPNG());
         } finally {
             canvas.renderMode=mode;canvas.worldCamera=oldCamera;canvas.planeDistance=oldDistance;
             camera.targetTexture=target;camera.aspect=oldAspect;RenderTexture.active=active;

@@ -36,8 +36,8 @@ namespace JellyWorldGame
         AudioSource audioSource;
         bool sound=true, paused;
         int Target { get { return LevelSpec.Score; } }
-        Color Ink { get { return new Color(.16f,.25f,.28f); } }
-        Color Purple { get { return new Color(.49f,.35f,.64f); } }
+        Color Ink { get { return new Color(.145f,.212f,.357f); } }
+        Color Purple { get { return new Color(.53f,.35f,.78f); } }
 
         void Start()
         {
@@ -353,7 +353,7 @@ namespace JellyWorldGame
             paused=true;ResetBoardGesture();Time.timeScale=0;
             if(Guardian!=null)Guardian.SyncCursor();if(Range!=null)Range.SyncCursor();
             ShowDialog("暂停","","","继续",()=>TogglePause(),true);
-            Button("Pause audio settings",modal,"音效设置",new Vector2(0,10),new Vector2(280,52),new Color(.85f,.93f,.91f),Ink,OpenAudioSettings,21);
+            Button("Pause audio settings",modal,"音效设置",new Vector2(0,10),new Vector2(280,52),new Color(.86f,.94f,1),Ink,OpenAudioSettings,21);
         }
         void Notice(string s) { if(toast!=null)toast.text=s; }
         void UpdateHUD()
@@ -384,12 +384,14 @@ namespace JellyWorldGame
             t.horizontalOverflow=HorizontalWrapMode.Wrap;t.verticalOverflow=VerticalWrapMode.Overflow;t.raycastTarget=false;
             if(bold)t.fontStyle=FontStyle.Bold;return t;
         }
-        Button Button(string name,Transform parent,string value,Vector2 pos,Vector2 size,Color bg,Color fg,Action action,int fontSize=23)
+        Button Button(string name,Transform parent,string value,Vector2 pos,Vector2 size,Color bg,Color fg,Action action,int fontSize=23,bool emphasized=false)
         {
             var image=Panel(name,parent,pos,size,bg);
+            var surface=image.gameObject.AddComponent<JellyUISurface>();
+            if(emphasized)surface.style=JellyUISurface.SurfaceStyle.Primary;
             var b=image.gameObject.AddComponent<Button>();b.targetGraphic=image;
             b.navigation=new Navigation {mode=Navigation.Mode.None};
-            var colors=b.colors;colors.highlightedColor=new Color(.96f,.94f,1);colors.pressedColor=new Color(.8f,.75f,.9f);b.colors=colors;
+            var colors=b.colors;colors.highlightedColor=Color.white;colors.pressedColor=Color.white;colors.disabledColor=new Color(.96f,.96f,1);b.colors=colors;
             b.onClick.AddListener(()=>{PlaySound(JellySound.Click,.45f);action();});
             b.gameObject.AddComponent<JellyButtonFeedback>().world=this;
             Label(name+" label",b.transform,value,Vector2.zero,size-new Vector2(16,4),fontSize,fg,TextAnchor.MiddleCenter);
@@ -408,7 +410,7 @@ namespace JellyWorldGame
             menuUI=Rect("Home",r,Vector2.zero,new Vector2(1600,900));
             BuildExperienceHome();
             gameUI=Rect("Play HUD",r,Vector2.zero,new Vector2(1600,900));
-            var stats=Panel("Compact score bar",gameUI,new Vector2(-178,412),new Vector2(766,63),new Color(1,.99f,.97f,.94f)).transform;
+            var stats=Card("Compact score bar",gameUI,new Vector2(-178,412),new Vector2(766,63),new Color(1,.99f,.97f,.94f)).transform;
             chapterLabel=Label("World index",stats,"",new Vector2(-263,5),new Vector2(224,38),17,Ink);
             Label("Score caption",stats,"分数",new Vector2(-115,5),new Vector2(50,30),17,Purple);
             scoreText=Label("Score",stats,"0",new Vector2(-39,5),new Vector2(110,42),27,Ink,TextAnchor.MiddleLeft,true);
@@ -440,11 +442,11 @@ namespace JellyWorldGame
             for(int i=modal.childCount-1;i>=0;i--) {var g=modal.GetChild(i).gameObject;g.SetActive(false);Destroy(g);}
             modal.gameObject.SetActive(true);
             Panel("Veil",modal,Vector2.zero,new Vector2(6000,4000),new Color(.16f,.12f,.28f,.46f));
-            var card=Panel("Dialog card",modal,Vector2.zero,new Vector2(690,520),new Color(1,.98f,.96f)).transform;
+            var card=Card("Dialog card",modal,Vector2.zero,new Vector2(690,520),new Color(1,.98f,.96f)).transform;
             Label("Dialog heading",card,title,new Vector2(0,185),new Vector2(630,57),34,Purple,TextAnchor.MiddleCenter,true);
             Label("Dialog subtitle",card,subtitle,new Vector2(0,116),new Vector2(620,53),29,Ink,TextAnchor.MiddleCenter);
             Label("Dialog details",card,detail,new Vector2(0,15),new Vector2(610,138),21,new Color(.45f,.40f,.54f),TextAnchor.MiddleCenter);
-            Button("Dialog primary",card,primary,new Vector2(0,-119),new Vector2(480,64),Purple,Color.white,action,25);
+            Button("Dialog primary",card,primary,new Vector2(0,-119),new Vector2(480,64),Purple,Color.white,action,25,emphasized:true);
             if(home) Button("Dialog secondary",card,secondaryLabel??(secondary!=null?"继续游戏":"返回主页"),new Vector2(0,-200),new Vector2(300,45),new Color(.93f,.90f,.96f),Ink,secondary??ShowMenu,19);
         }
     }

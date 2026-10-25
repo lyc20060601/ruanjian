@@ -22,13 +22,13 @@ namespace JellyWorldGame
         {
             guardianUI=Rect("Guardian HUD",root,Vector2.zero,new Vector2(1600,900));
             var card=Panel("Guardian identity",guardianUI,new Vector2(-530,350),new Vector2(430,128),new Color(.13f,.19f,.28f,.94f)).transform;
-            Label("Guardian title",card,"守护者",new Vector2(0,31),new Vector2(382,35),22,new Color(.70f,1,.85f),TextAnchor.MiddleLeft,true);
+            Label("Guardian title",card,"守护者",new Vector2(0,31),new Vector2(382,35),22,new Color(.74f,.88f,1),TextAnchor.MiddleLeft,true);
             Label("Guardian subtitle",card,"带冰方块：先碎冰，再消除",new Vector2(0,-23),new Vector2(382,42),18,Color.white);
             var stat=Panel("Energy card",guardianUI,new Vector2(23,351),new Vector2(518,127),new Color(1,.98f,.94f,.95f)).transform;
             guardianTimer=Label("Guardian timer",stat,"20s",new Vector2(-173,20),new Vector2(105,52),33,Ink,TextAnchor.MiddleLeft,true);
             guardianEnergy=Label("Guardian energy",stat,"",new Vector2(74,23),new Vector2(322,42),21,Ink,TextAnchor.MiddleRight);
             var track=Panel("Guardian energy track",stat,new Vector2(0,-31),new Vector2(454,12),new Color(.82f,.85f,.88f));
-            guardianBar=Panel("Guardian energy fill",track.transform,Vector2.zero,new Vector2(454,12),new Color(.29f,.74f,.65f));
+            guardianBar=Panel("Guardian energy fill",track.transform,Vector2.zero,new Vector2(454,12),new Color(.37f,.73f,.98f));
             guardianBar.type=Image.Type.Filled;guardianBar.fillMethod=Image.FillMethod.Horizontal;
             Button("Guardian pause",guardianUI,"暂停  II",new Vector2(649,382),new Vector2(182,48),new Color(1,1,1,.92f),Ink,TogglePause,20);
             Button("Return to board",guardianUI,"结束召唤  ↗",new Vector2(649,315),new Vector2(182,48),new Color(.24f,.31f,.43f),Color.white,()=>{if(Guardian!=null)Guardian.End();},20);
@@ -37,7 +37,7 @@ namespace JellyWorldGame
             guardianStatus=Label("Guardian status",feedback.transform,"",Vector2.zero,new Vector2(235,42),21,Color.white,TextAnchor.MiddleCenter);
             var controls=Panel("Guardian controls",guardianUI,new Vector2(0,-371),new Vector2(1240,106),new Color(.13f,.19f,.28f,.93f)).transform;
             Label("Keys",controls,"W A S D 移动   SHIFT 跑动   长按 SPACE 蓄力跳跃   F 范围重踏",new Vector2(0,20),new Vector2(1190,38),22,Color.white,TextAnchor.MiddleCenter);
-            Label("Camera keys",controls,"V 切换视角 · 第一人称移动鼠标自由看     TAB 释放 / 锁定鼠标     R 返回棋盘",new Vector2(0,-24),new Vector2(1190,32),17,new Color(.68f,.87f,.83f),TextAnchor.MiddleCenter);
+            Label("Camera keys",controls,"V 切换视角 · 第一人称移动鼠标自由看     TAB 释放 / 锁定鼠标     R 返回棋盘",new Vector2(0,-24),new Vector2(1190,32),17,new Color(.77f,.86f,1),TextAnchor.MiddleCenter);
             guardianView=Label("View status",guardianUI,"",new Vector2(-531,-278),new Vector2(440,38),19,Ink);
             Button("Switch guardian camera",guardianUI,"切换视角  V",new Vector2(611,-278),new Vector2(252,48),new Color(1,1,1,.88f),Ink,()=>{if(Guardian!=null)Guardian.ToggleView();},20);
             jumpChargePanel=Panel("Jump charge panel",guardianUI,new Vector2(0,-270),new Vector2(480,84),new Color(.12f,.17f,.25f,.97f));
@@ -109,7 +109,7 @@ namespace JellyWorldGame
         public void SetJumpHUD(float charge,bool charging,bool airborne)
         {
             charge=Mathf.Clamp01(charge);jumpCharge.fillAmount=charge;
-            jumpCharge.color=charge>=.99f?new Color(.38f,1,.74f):new Color(1,.73f,.19f);
+            jumpCharge.color=charge>=.99f?new Color(.54f,.84f,1):new Color(1,.73f,.19f);
             jumpChargePanel.color=charging?new Color(.16f,.22f,.31f,.99f):new Color(.12f,.17f,.25f,.97f);
             jumpChargeText.text=airborne?"腾空中 · 即将落地":charging?(charge>=.99f?"蓄力已满  100%  ·  松开跳跃":"蓄力  "+Mathf.RoundToInt(charge*100)+"%  ·  松开跳跃"):"SPACE  长按蓄力 · 松开跳跃";
         }
