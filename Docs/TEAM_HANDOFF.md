@@ -6,14 +6,35 @@
 
 项目版本为 `2022.3.42f1c1`。原制作环境尚未安装 WebGL Build Support，未生成可运行的 WebGL 构建。**源码上传不等于网页交付完成。**
 
+## 本分支的 Windows 试玩与自动验收
+
+当前分支为 `feature/candy-journey-review`；开发任务与逐步提交见 [审查顺序](DEVELOPMENT_2026-10-25.md)。
+
+Windows：退出 Play Mode，执行 `Jelly World > Build Windows playtest`，输出 `Builds/CandyOpen/JellyWorld.exe`。仓库不包含构建产物，首次需自行构建；构建后双击根目录 `试玩明亮糖果.bat`。
+
+在仓库根目录使用 PowerShell，先把 `$unityEditorPath` 设为本机对应版本 `Unity.exe` 的完整路径：
+
+```powershell
+# 规则与解锁边界
+& $unityEditorPath -batchmode -quit -projectPath "$PWD" -executeMethod JellyExperienceVerification.VerifyRules -logFile "Logs/rules.log"
+# 完整运行回归：不要添加 -quit，验证程序进入 Play Mode，恢复原档后自行退出
+& $unityEditorPath -batchmode -projectPath "$PWD" -executeMethod JellyExperienceBatch.Run -logFile "Logs/playmode.log"
+# Windows 构建
+& $unityEditorPath -batchmode -quit -projectPath "$PWD" -executeMethod JellyWindowsBuild.Build -logFile "Logs/build.log"
+```
+
+完整回归报告和实际渲染截图输出到 `Captures/CandyOpen`。测试暂时设置 QA 存档并在结束后恢复；不要在同一工程的另一个编辑器中同时执行。首次导入需等待包与资源还原。
+
 ## 建议分工
 
 | 工作 | 主要入口 | 接手目标 |
 | --- | --- | --- |
 | 网页构建与发布 | `Editor/JellyWebBuild.cs` | 安装模块、构建、浏览器验收、发布 URL |
+| 成长与解锁 | `JellyJourney.cs`、`JellyWorldExperience.cs` | 解锁边界、最佳星星累计、章节与存档兼容 |
 | 关卡与难度 | `JellyLevels.cs`、`JellyBoard.cs`、`JellyWorldCampaign.cs` | 调整难度，确认所有关卡可通关 |
 | UI 与输入 | `JellyWorld.cs`、`JellyWorldInput.cs`、`JellyWorldToolPool.cs` | 分辨率适配、拖动、暂停体验 |
 | 道具与场景 | `JellyWorldToolActions.cs`、`JellyGolemMode.cs`、`JellySugarRange.cs` | 边界、场景往返、计分同步 |
+| 图形与预览 | `JellyUISurface.cs`、`JellyMapPreview.cs`、`Resources/SoftButton.shader` | 按钮曲面、预览纹理释放、信息区清晰度 |
 | 音效与素材 | `JellyWorldAudio.cs`、`Audio/SOURCES.md` | 网页音频、音量、素材来源 |
 | 验收 | `Editor/*Verification.cs` | 自动回归与实际浏览器、人工验收 |
 
