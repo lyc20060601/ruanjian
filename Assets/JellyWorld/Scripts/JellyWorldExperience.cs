@@ -14,6 +14,8 @@ namespace JellyWorldGame
         readonly List<Material> comfortMaterials=new List<Material>();
         readonly List<Image> chapterTabs=new List<Image>();
         int journeyChapter;
+        Material uiButtonMaterial;
+        RectTransform toolPoolLayout;
         public bool ReducedEffects {get;private set;}
         public bool IsToolUnlocked(int index){return JellyJourney.CanUseTool(index,JellyProgress.Unlocked,InfiniteMode);}
         public void SetReducedEffects(bool value)
@@ -58,13 +60,13 @@ namespace JellyWorldGame
             if(result.HasProperty("_EmissionColor"))result.SetColor("_EmissionColor",color*.018f);
             comfortMaterials.Add(result);return result;
         }
-        void OnDestroy(){ReleaseMapPreviews();foreach(var material in comfortMaterials)if(material!=null)Destroy(material);}
+        void OnDestroy(){ReleaseMapPreviews();if(uiButtonMaterial!=null)Destroy(uiButtonMaterial);foreach(var material in comfortMaterials)if(material!=null)Destroy(material);}
         void BuildExperienceHome()
         {
             Label("Home wordmark",menuUI,"JELLY WORLD  /  果冻漫游",new Vector2(-455,365),new Vector2(590,40),23,Ink,TextAnchor.MiddleLeft,true);
             Label("Home title",menuUI,"在糖果世界\n慢慢发现惊喜",new Vector2(-455,220),new Vector2(590,166),53,Ink,TextAnchor.MiddleLeft,true);
             Label("Home introduction",menuUI,"交换 · 消除 · 探索",new Vector2(-455,103),new Vector2(590,36),21,new Color(.23f,.39f,.64f));
-            var card=Card("Journey home card",menuUI,new Vector2(-455,-104),new Vector2(590,342),Porcelain).transform;
+            var card=Rect("Journey home card",menuUI,new Vector2(-455,-104),new Vector2(590,342));
             bestText=Label("Best",card,"",new Vector2(0,125),new Vector2(514,38),22,Ink);
             var play=Button("Continue journey",card,"开始旅程",new Vector2(0,55),new Vector2(514,68),Accent,Ink,ContinueJourney,26,emphasized:true);
             continueLabel=play.GetComponentInChildren<Text>();
@@ -144,7 +146,7 @@ namespace JellyWorldGame
         }
         void BuildObjectivePanel(Transform parent)
         {
-            var card=Card("Objectives card",parent,new Vector2(603,250),new Vector2(302,250),Porcelain).transform;
+            var card=Rect("Objectives card",parent,new Vector2(603,250),new Vector2(302,250));
             Label("Objectives heading",card,"本关目标",new Vector2(0,91),new Vector2(254,38),23,Ink,TextAnchor.MiddleLeft,true);
             for(int i=0;i<4;i++) {
                 var row=Rect("Objective row "+i,card,new Vector2(0,44-i*44),new Vector2(254,42));objectiveRows[i]=row.gameObject;
@@ -157,12 +159,15 @@ namespace JellyWorldGame
         {
             if(objectiveValues[0]==null)return;
             for(int i=0;i<4;i++)objectiveRows[i].SetActive(false);
-            if(InfiniteMode){objectiveRows[0].SetActive(true);objectiveValues[0].text="慢慢玩，自由探索";objectiveBars[0].fillAmount=1;return;}
+            if(InfiniteMode){objectiveRows[0].SetActive(true);objectiveValues[0].text="慢慢玩，自由探索";objectiveBars[0].fillAmount=1;ArrangeToolPool(1);return;}
             var c=LevelSpec;int row=0;SetObjective(row++,"积分",score,c.Score);
             if(c.ColorA>=0)SetObjective(row++,JellyLevels.ColorNames[c.ColorA]+"果冻",collected[c.ColorA],c.AmountA);
             if(c.ColorB>=0)SetObjective(row++,JellyLevels.ColorNames[c.ColorB]+"果冻",collected[c.ColorB],c.AmountB);
-            if(c.Frost>0)SetObjective(row,"清除冰层",c.Frost-FrostRemaining,c.Frost);
+            if(c.Frost>0)SetObjective(row++,"清除冰层",c.Frost-FrostRemaining,c.Frost);
+            ArrangeToolPool(row);
         }
+        void ArrangeToolPool(int rows)
+        {if(toolPoolLayout!=null)toolPoolLayout.anchoredPosition=new Vector2(603,71-Mathf.Clamp(rows,1,4)*44);}
         void SetObjective(int row,string title,int value,int target)
         {
             objectiveRows[row].SetActive(true);bool complete=value>=target;

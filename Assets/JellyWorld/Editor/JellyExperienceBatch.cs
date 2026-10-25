@@ -31,7 +31,7 @@ public static class JellyExperienceBatch
     {
         SessionState.SetBool(Key+".VisualOnly",visualOnly);
         JellyExperienceVerification.VerifyRules();
-        Directory.CreateDirectory("Captures/CandyBalanced");
+        Directory.CreateDirectory("Captures/CandyOpen");
         SessionState.SetInt(Key, 1);
         EditorSceneManager.OpenScene("Assets/Scenes/JellyWorld.unity");
         EditorApplication.isPlaying = true;
@@ -80,7 +80,7 @@ public static class JellyExperienceBatch
         foreach(string key in intKeys) { if(present.Contains(key))PlayerPrefs.SetInt(key,int.Parse(saved[key]));else PlayerPrefs.DeleteKey(key); }
         foreach(string key in stringKeys) { if(present.Contains(key))PlayerPrefs.SetString(key,saved[key]);else PlayerPrefs.DeleteKey(key); }
         PlayerPrefs.Save();
-        File.WriteAllText("Captures/CandyBalanced/Verification.txt",(pass?"PASS: ":"FAIL: ")+message+"\n"+DateTime.Now.ToString("s"));
+        File.WriteAllText("Captures/CandyOpen/Verification.txt",(pass?"PASS: ":"FAIL: ")+message+"\n"+DateTime.Now.ToString("s"));
         Debug.Log((pass?"COMFORT JOURNEY PASS: ":"COMFORT JOURNEY FAIL: ")+message);
         EditorApplication.isPlaying=false;
     }
@@ -130,6 +130,28 @@ public static class JellyExperienceBatch
         CheckPreviewTextures();world.ShowMenu();
         GameObject.Find("Continue journey").GetComponent<Button>().onClick.Invoke();yield return null;
         Check(world.mode=="play" && world.level==1,"home continues into first level");
+        foreach(var name in new[]{"Journey home card","Objectives card","Tool pool","Compact score bar"}) {
+            foreach(var node in world.GetComponentsInChildren<RectTransform>(true))if(node.name==name)
+                Check(node.GetComponent<Graphic>()==null,"layout group has no background/raycast graphic: "+name);
+        }
+        Check(playButton.GetComponent<Image>().material.shader.name=="Jelly World/Soft Button","rounded lighting shader assigned");
+        yield return Capture("08-first-level");yield return Capture("08-first-level-1280",1280,720);
+        // Button faces catch UI rays; unpainted layout padding does not.
+        var toolCard=GameObject.Find("Tool card 0").GetComponent<RectTransform>();
+        var rayPointer=new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current);
+        rayPointer.position=RectTransformUtility.WorldToScreenPoint(null,toolCard.position);
+        var hits=new List<UnityEngine.EventSystems.RaycastResult>();UnityEngine.EventSystems.EventSystem.current.RaycastAll(rayPointer,hits);
+        var hitGraphic=toolCard.GetComponent<Image>();
+        Debug.Log("UI RAY BEFORE: pointer="+rayPointer.position+" screen="+Screen.width+"x"+Screen.height+" depth="+hitGraphic.depth+" culled="+hitGraphic.canvasRenderer.cull+" hits="+hits.Count);
+        Canvas.ForceUpdateCanvases();yield return null;
+        rayPointer.position=RectTransformUtility.WorldToScreenPoint(null,toolCard.position);hits.Clear();
+        UnityEngine.EventSystems.EventSystem.current.RaycastAll(rayPointer,hits);
+        Debug.Log("UI RAY AFTER: pointer="+rayPointer.position+" screen="+Screen.width+"x"+Screen.height+" depth="+hitGraphic.depth+" culled="+hitGraphic.canvasRenderer.cull+" hits="+hits.Count);
+        Check(hits.Exists(hit=>hit.gameObject.name=="Tool card 0"),"tool card retains raycast target without outer plate");
+        hits.Clear();rayPointer.position=RectTransformUtility.WorldToScreenPoint(null,GameObject.Find("Objectives card").transform.position);
+        UnityEngine.EventSystems.EventSystem.current.RaycastAll(rayPointer,hits);
+        Check(hits.Count==0,"blank objective-area layout does not intercept pointer");
+        Check(playButton.GetComponent<Image>().material.shader.isSupported,"button shader supported");
         for(int i=0;i<5;i++)Check(!Unlocked(i),"fresh profile tools locked");
         int hammer=world.ToolCharges(0),shuffle=world.ToolCharges(2);
         world.ChooseTool(0);world.ChooseTool(2);world.SummonGuardian();world.StartRange();
@@ -161,6 +183,15 @@ public static class JellyExperienceBatch
         yield return Capture("04-board-1280",1280,720);
         world.ChooseTool(0);yield return null;yield return Capture("07-selected-tool");
         world.ChooseTool(0);
+        world.level=12;world.NewGame();yield return null;
+        yield return Capture("09-three-objectives");
+        world.level=5;world.NewGame();yield return null;
+
+        world.busy=true;
+        typeof(JellyWorld).GetMethod("RefreshToolPool",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(world,null);
+        yield return new WaitForSecondsRealtime(.15f);yield return Capture("10-busy-controls");
+        world.busy=false;
+        typeof(JellyWorld).GetMethod("RefreshToolPool",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(world,null);
 
         var effects=(Transform)typeof(JellyWorld).GetField("effects",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(world);
         for(int i=0;i<100;i++)JellyVfx.Shatter(world,effects,Vector3.zero,i%5,Vector3.back);
@@ -197,7 +228,7 @@ public static class JellyExperienceBatch
             canvas.renderMode=RenderMode.ScreenSpaceCamera;canvas.worldCamera=camera;canvas.planeDistance=1;
             yield return null;Canvas.ForceUpdateCanvases();camera.Render();RenderTexture.active=rt;
             image.ReadPixels(new Rect(0,0,width,height),0,0);image.Apply();
-            File.WriteAllBytes("Captures/CandyBalanced/"+name+".png",image.EncodeToPNG());
+            File.WriteAllBytes("Captures/CandyOpen/"+name+".png",image.EncodeToPNG());
         } finally {
             canvas.renderMode=mode;canvas.worldCamera=oldCamera;canvas.planeDistance=oldDistance;
             camera.targetTexture=target;camera.aspect=oldAspect;RenderTexture.active=active;

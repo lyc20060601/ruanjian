@@ -11,10 +11,10 @@ public static class JellyWindowsBuild
     {
         if (EditorApplication.isPlaying) throw new InvalidOperationException("Stop Play Mode before building.");
         JellyExperienceVerification.VerifyRules();
-        Directory.CreateDirectory("Builds/CandyBalanced");
+        Directory.CreateDirectory("Builds/CandyOpen");
         var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions {
             scenes = new[] { "Assets/Scenes/JellyWorld.unity" },
-            locationPathName = "Builds/CandyBalanced/JellyWorld.exe",
+            locationPathName = "Builds/CandyOpen/JellyWorld.exe",
             target = BuildTarget.StandaloneWindows64,
             options = BuildOptions.None
         });

@@ -20,7 +20,7 @@ namespace JellyWorldGame
         public string mode="menu";
         public JellyBoard board;
         public JellyTile[,] tiles=new JellyTile[8,8];
-        Transform stage, hero, tileRoot, decor, effects;
+        Transform stage, hero, tileRoot, decor, effects, menuClouds, sidebarScenery;
         Canvas canvas;
         RectTransform menuUI, gameUI, modal;
         Text scoreText, moveText, goalText, toast, bestText, toolText, comboText;
@@ -102,6 +102,7 @@ namespace JellyWorldGame
         void BuildLandscape()
         {
             decor=Group("Marshmallow archipelago",transform);
+            menuClouds=Group("Menu cloud scenery",decor);sidebarScenery=Group("Menu right-side scenery",decor);
             Shape("Pistachio planet",decor,new Vector3(0,-7,16),new Vector3(33,8,16),mint,true);
             Shape("Vanilla shore",decor,new Vector3(0,-7.2f,8),new Vector3(30,6,9),cream,true);
             Shape("Rose dune",decor,new Vector3(-10,-5.5f,14),new Vector3(12,7,10),blush,true);
@@ -109,13 +110,13 @@ namespace JellyWorldGame
             for(int side=-1;side<=1;side+=2) {
                 if(side==1)for(int i=0;i<4;i++) {
                     float x=side*(7.6f+i*.9f);
-                    Shape("Cloud puff",decor,new Vector3(x,3.7f+(i%2)*.28f,6),new Vector3(2.2f,1.25f,1.1f),white,true);
+                    Shape("Cloud puff",menuClouds,new Vector3(x,3.7f+(i%2)*.28f,6),new Vector3(2.2f,1.25f,1.1f),white,true);
                 }
                 for(int i=0;i<3;i++) {
-                    float x=side*(10.1f+i*1.3f), y=-2.4f-i*.55f;
-                    Shape("Candy tree stem",decor,new Vector3(x,y-.65f,3),new Vector3(.18f,2.2f,.18f),cream);
-                    Shape("Candy tree crown",decor,new Vector3(x,y+.5f,3),new Vector3(1.5f,2.0f,1.25f),candy[(i+(side==1?2:0))%5],true);
-                    Shape("Tree sugar glint",decor,new Vector3(x-.25f,y+.85f,2.4f),new Vector3(.22f,.45f,.07f),white,true);
+                    float x=side*((side<0?12.2f:10.1f)+i*1.3f), y=-2.4f-i*.55f;
+                    Shape("Candy tree stem",side==1?sidebarScenery:decor,new Vector3(x,y-.65f,3),new Vector3(.18f,2.2f,.18f),cream);
+                    Shape("Candy tree crown",side==1?sidebarScenery:decor,new Vector3(x,y+.5f,3),new Vector3(1.5f,2.0f,1.25f),candy[(i+(side==1?2:0))%5],true);
+                    Shape("Tree sugar glint",side==1?sidebarScenery:decor,new Vector3(x-.25f,y+.85f,2.4f),new Vector3(.22f,.45f,.07f),white,true);
                 }
             }
             for(int i=0;i<22;i++) {
@@ -194,6 +195,7 @@ namespace JellyWorldGame
             ResetObjectives();
             for(int x=0;x<BoardSize;x++) for(int y=0;y<BoardSize;y++)if(board.Contains(new Vector2Int(x,y)))Spawn(x,y,board.Cells[x,y],false);
             hero.gameObject.SetActive(false);stage.gameObject.SetActive(true);
+            menuClouds.gameObject.SetActive(false);sidebarScenery.gameObject.SetActive(false);
             menuUI.gameObject.SetActive(false);gameUI.gameObject.SetActive(true);modal.gameObject.SetActive(false);
             if(infiniteUI!=null)infiniteUI.gameObject.SetActive(false);
             HideCampaignPages();
@@ -207,6 +209,7 @@ namespace JellyWorldGame
             CancelGuardian();
             StopAllCoroutines();ClearEffects();Time.timeScale=1;paused=false;busy=false;pointerDown=false;mode="menu";
             hero.gameObject.SetActive(true);stage.gameObject.SetActive(false);
+            menuClouds.gameObject.SetActive(true);sidebarScenery.gameObject.SetActive(true);
             menuUI.gameObject.SetActive(true);gameUI.gameObject.SetActive(false);modal.gameObject.SetActive(false);
             if(infiniteUI!=null)infiniteUI.gameObject.SetActive(false);
             HideCampaignPages();
@@ -387,6 +390,7 @@ namespace JellyWorldGame
         Button Button(string name,Transform parent,string value,Vector2 pos,Vector2 size,Color bg,Color fg,Action action,int fontSize=23,bool emphasized=false)
         {
             var image=Panel(name,parent,pos,size,bg);
+            if(uiButtonMaterial!=null)image.material=uiButtonMaterial;
             var surface=image.gameObject.AddComponent<JellyUISurface>();
             if(emphasized)surface.style=JellyUISurface.SurfaceStyle.Primary;
             var b=image.gameObject.AddComponent<Button>();b.targetGraphic=image;
@@ -401,6 +405,11 @@ namespace JellyWorldGame
         {
             var r=Rect("Jelly World interface",transform,Vector2.zero,new Vector2(1600,900));
             canvas=r.gameObject.AddComponent<Canvas>();canvas.renderMode=RenderMode.ScreenSpaceOverlay;
+            canvas.additionalShaderChannels|=AdditionalCanvasShaderChannels.TexCoord1;
+            if(Application.isPlaying && uiButtonMaterial==null) {
+                var shader=Resources.Load<Shader>("SoftButton");
+                if(shader!=null)uiButtonMaterial=new Material(shader){name="Rounded candy controls"};
+            }
             var scaler=r.gameObject.AddComponent<CanvasScaler>();scaler.uiScaleMode=CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution=new Vector2(1600,900);scaler.screenMatchMode=CanvasScaler.ScreenMatchMode.Expand;
             r.gameObject.AddComponent<GraphicRaycaster>();
@@ -410,7 +419,7 @@ namespace JellyWorldGame
             menuUI=Rect("Home",r,Vector2.zero,new Vector2(1600,900));
             BuildExperienceHome();
             gameUI=Rect("Play HUD",r,Vector2.zero,new Vector2(1600,900));
-            var stats=Card("Compact score bar",gameUI,new Vector2(-178,412),new Vector2(766,63),new Color(1,.99f,.97f,.94f)).transform;
+            var stats=Rect("Compact score bar",gameUI,new Vector2(-178,412),new Vector2(766,63));
             chapterLabel=Label("World index",stats,"",new Vector2(-263,5),new Vector2(224,38),17,Ink);
             Label("Score caption",stats,"分数",new Vector2(-115,5),new Vector2(50,30),17,Purple);
             scoreText=Label("Score",stats,"0",new Vector2(-39,5),new Vector2(110,42),27,Ink,TextAnchor.MiddleLeft,true);

@@ -27,7 +27,7 @@ namespace JellyWorldGame
             if(icon!=null)icon.localScale=Vector3.Lerp(icon.localScale,Vector3.one*(hover && enabledButton?1.035f:1),1-Mathf.Exp(-18*Time.unscaledDeltaTime));
             press=Mathf.Lerp(press,down && enabledButton?1:0,1-Mathf.Exp(-30*Time.unscaledDeltaTime));
             hoverAmount=Mathf.Lerp(hoverAmount,hover && enabledButton?1:0,1-Mathf.Exp(-18*Time.unscaledDeltaTime));
-            if(surface!=null){surface.SetHover(hoverAmount);surface.SetPress(press);for(int i=0;i<content.Length;i++)if(content[i]!=null)content[i].anchoredPosition=restingPositions[i]+Vector2.up*surface.FaceOffset;}
+            if(surface!=null){surface.SetAvailable(enabledButton);surface.SetHover(hoverAmount);surface.SetPress(press);for(int i=0;i<content.Length;i++)if(content[i]!=null)content[i].anchoredPosition=restingPositions[i]+Vector2.up*surface.FaceOffset;}
         }
         public void OnPointerEnter(PointerEventData e){hover=true;if(button!=null && button.interactable && world!=null)world.PlaySound(JellySound.Hover,.18f);}
         public void OnPointerExit(PointerEventData e){hover=false;down=false;}

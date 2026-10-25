@@ -20,7 +20,7 @@ namespace JellyWorldGame
         void BuildInfiniteUI(Transform root)
         {
             infiniteUI=Rect("Infinite playground page",root,Vector2.zero,new Vector2(1600,900));
-            var card=Card("Infinite options",infiniteUI,new Vector2(-422,0),new Vector2(560,430),new Color(1,.99f,.97f,.96f)).transform;
+            var card=Rect("Infinite options",infiniteUI,new Vector2(-422,0),new Vector2(560,430));
             Label("Infinite title",card,"自由乐园",new Vector2(0,125),new Vector2(476,75),49,Ink);
             Label("Infinite description",card,"不限步数 · 全道具开放\n自由消除，或进入守护者与靶场",new Vector2(0,21),new Vector2(476,93),25,Ink);
             Button("Enter infinite",card,"开始",new Vector2(0,-96),new Vector2(476,65),new Color(.38f,.78f,.98f),Ink,StartInfinite,26,emphasized:true);
