@@ -7,6 +7,13 @@ namespace JellyWorldGame
         JellyTile dragSource,queuedSource,queuedTarget;
         Vector2 dragOrigin;
         bool gestureConsumed,dragAwaiting,toolGesture;
+        JellyTile hoverTile;
+        void UpdateTileHover()
+        {
+            var next=Application.isPlaying && Application.isFocused && mode=="play" && !paused && !busy && !PointerOverUI()?PointerTile():null;
+            if(hoverTile!=next){if(hoverTile!=null)hoverTile.hovered=false;hoverTile=next;}
+            if(hoverTile!=null)hoverTile.hovered=true;
+        }
         public bool HasBufferedSwap {get{return queuedSource!=null && queuedTarget!=null;}}
         bool LiveTile(JellyTile tile)
         {
@@ -32,6 +39,8 @@ namespace JellyWorldGame
         bool PointerOverUI(){return EventSystem.current!=null && EventSystem.current.IsPointerOverGameObject();}
         public void ResetBoardGesture()
         {
+            if(hoverTile!=null)hoverTile.hovered=false;hoverTile=null;
+            if(dragSource!=null){dragSource.pressed=false;dragSource.pointerLean=Vector2.zero;}
             pointerDown=false;dragSource=null;queuedSource=null;queuedTarget=null;
             gestureConsumed=false;dragAwaiting=false;toolGesture=false;
         }
@@ -65,6 +74,7 @@ namespace JellyWorldGame
                 dragSource=PointerTile();pointerDown=LiveTile(dragSource);
                 gestureConsumed=false;dragAwaiting=false;toolGesture=activeTool>=0 || ChoosingLanding;
                 PointerOnBoard(out dragOrigin);idle=0;
+                if(dragSource!=null && !busy){dragSource.pressed=true;dragSource.Pulse(.055f);}
             }
             if(pointerDown && Input.GetMouseButton(0) && !toolGesture && activeTool<0 && !ChoosingLanding) {
                 Vector2 point;
@@ -76,24 +86,28 @@ namespace JellyWorldGame
                     }
                 } else if(LiveTile(dragSource) && !PointerOverUI()) {
                     Vector2 delta=point-dragOrigin;
+                    dragSource.pointerLean=Vector2.ClampMagnitude(delta*3,1);
                     // Trigger while the button is held, not only after mouse-up.
                     if(delta.magnitude>=.30f) {
                         Vector2Int direction=Mathf.Abs(delta.x)>=Mathf.Abs(delta.y)
                             ?new Vector2Int(delta.x>0?1:-1,0):new Vector2Int(0,delta.y>0?1:-1);
                         var next=new Vector2Int(dragSource.x,dragSource.y)+direction;
                         if(Inside(next) && RequestDragSwap(dragSource,tiles[next.x,next.y])) {
+                            dragSource.pressed=false;dragSource.pointerLean=Vector2.zero;
                             gestureConsumed=true;dragAwaiting=true;dragOrigin=point;
                         }
                     }
                 }
             }
             if(Input.GetMouseButtonUp(0)) {
+                if(dragSource!=null){dragSource.pressed=false;dragSource.pointerLean=Vector2.zero;}
                 if(pointerDown && !gestureConsumed && !busy && !PointerOverUI()) {
                     var end=PointerTile();
                     if(LiveTile(end))ClickCell(new Vector2Int(end.x,end.y));
                 }
                 pointerDown=false;dragSource=null;dragAwaiting=false;toolGesture=false;
             } else if(pointerDown && !Input.GetMouseButton(0)) {
+                if(dragSource!=null){dragSource.pressed=false;dragSource.pointerLean=Vector2.zero;}
                 pointerDown=false;dragSource=null;
             }
         }

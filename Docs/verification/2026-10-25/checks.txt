@@ -1,0 +1,7 @@
+JELLY RULES PASS: 200 square seeds and 360 shaped boards; connected maps, match-free openings, legal hints, reversible swaps and cross union. Moves: 200
+JELLY JOURNEY RULES PASS: unlock boundaries, sandbox, existing players and growth thresholds
+CAMPAIGN PASS: 27365
+FALLING INPUT PASS
+FEEL CHECKS PASS
+INFINITE CHECKS PASS: 37785
+COMFORT JOURNEY PASS: journey gates, replay stars, chapter navigation, fresh/returning profiles; campaign, buffered input, ice/audio and infinite regressions; rendered screenshots

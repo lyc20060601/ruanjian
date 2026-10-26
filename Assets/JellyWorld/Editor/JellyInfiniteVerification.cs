@@ -22,7 +22,7 @@ public static class JellyInfiniteVerification
         while(w.Guardian.Transitioning && Time.realtimeSinceStartup<deadline) {
             if(w.Guardian.TransitionPhase=="fold") {
                 Check(!w.Guardian.Actor.gameObject.activeInHierarchy && !w.Guardian.PlatformVisible,"actor and platform absent during board turn");
-                var stage=GameObject.Find("08 x 08 • Jelly garden").transform;
+                var stage=GameObject.Find("Jelly board "+w.BoardSize+"x"+w.BoardSize).transform;
                 Check(Vector3.Dot(Camera.main.transform.position-stage.position,-stage.forward)>6,"camera remains in front of board");turnFrames++;
             }
             yield return null;
@@ -35,7 +35,7 @@ public static class JellyInfiniteVerification
         while((w.mode=="golem" || w.busy) && Time.realtimeSinceStartup<deadline) {
             if(w.Guardian!=null && w.Guardian.Active && w.Guardian.TransitionPhase=="unfold") {
                 Check(!w.Guardian.Actor.gameObject.activeInHierarchy && !w.Guardian.PlatformVisible,"actor and platform absent on return turn");
-                var stage=GameObject.Find("08 x 08 • Jelly garden").transform;
+                var stage=GameObject.Find("Jelly board "+w.BoardSize+"x"+w.BoardSize).transform;
                 Check(Vector3.Dot(Camera.main.transform.position-stage.position,-stage.forward)>6,"return camera outside board");turnFrames++;
             }
             yield return null;
@@ -124,7 +124,7 @@ public static class JellyInfiniteVerification
         w.SummonGuardian();w.ConfirmGuardianLanding(new Vector2Int(4,4));yield return Entered(w);Check(g.Active,"can resummon without restarting");
         g.ToggleView();w.ShowMenu();yield return null;
         Check(Cursor.visible && Cursor.lockState==CursorLockMode.None && !g.Active,"home cleans up first person cursor and actor");
-        w.StartChallenge();Check(!w.InfiniteMode && w.moves==26,"challenge remains separate");
+        w.StartChallenge();Check(!w.InfiniteMode && w.moves==w.LevelSpec.Moves,"challenge remains separate");
         w.ChooseTool(2);yield return DoneAction(w);Check(w.ToolCharges(2)==1,"challenge still consumes tools");
         w.ShowMenu();PlayerPrefs.SetInt("JellyWorld.InfiniteBest",best);PlayerPrefs.SetInt("JellyWorld.Best",oldBest);PlayerPrefs.Save();
         Directory.CreateDirectory("Captures");

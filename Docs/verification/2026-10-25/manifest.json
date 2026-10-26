@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-25",
+  "timezone": "Asia/Shanghai",
+  "code_commit": "276e047",
+  "editor": "2022.3.42f1c1",
+  "runtime_result": "pass",
+  "stage_compilation": {
+    "be04bc0": "runtime/editor pass",
+    "27d305e": "runtime/editor pass",
+    "7f86101": "runtime/editor pass",
+    "276e047": "runtime/editor pass"
+  },
+  "screenshot_sha256": {
+    "board-1280.png": "7806bd5d5e57ba6b033df857b816a458b058503c5d4c8c57b901eec1b1e92887",
+    "board.png": "aa996070c8cbe106856cc37e6f6166773bf0b646244a731aceedb9f16a5be425",
+    "chapters.png": "1f05992cdcf7a2b7479a912ca0255a01f145f5a7d419fc025d5586e685e7e1b3",
+    "first-level.png": "4cd9fd932912939d2fec5b73246b65300fd47b3e8760841e9e4abc57796c3485",
+    "home.png": "8226bb4d54afe34d7faacdc1d779af69e50dc74e3cb8fd78f404b75238c4534f"
+  },
+  "windows_build": {
+    "result": "Succeeded",
+    "target": "StandaloneWindows64",
+    "total_bytes": 106523921,
+    "editor_exit_code": 0
+  }
+}

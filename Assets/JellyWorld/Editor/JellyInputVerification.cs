@@ -43,8 +43,10 @@ public static class JellyInputVerification
         if(source!=null && source.IsFalling)Check(w.HasBufferedSwap,"waits for actual landing");
         yield return Settle(w);
         Check(w.moves==34 && w.score>=180,"buffered legal swap executes once after landing");
-        for(int x=0;x<w.BoardSize;x++)for(int y=0;y<w.BoardSize;y++)
-            Check(w.tiles[x,y]!=null && w.tiles[x,y].color==w.board.Cells[x,y],"model and view stay synchronized");
+        for(int x=0;x<w.BoardSize;x++)for(int y=0;y<w.BoardSize;y++) {
+            if(w.IsPlayableCell(x,y))Check(w.tiles[x,y]!=null && w.tiles[x,y].color==w.board.Cells[x,y],"model and view stay synchronized");
+            else Check(w.tiles[x,y]==null && w.board.Cells[x,y]==JellyBoard.Blocked,"map holes stay empty");
+        }
         w.NewGame();w.board.FindMove(out a,out b);source=w.tiles[a.x,a.y];destination=w.tiles[b.x,b.y];
         w.busy=true;Check(w.RequestDragSwap(source,destination),"buffers before elimination");
         w.StartCoroutine(w.Resolve(new HashSet<Vector2Int>{a},false));

@@ -1,0 +1,3 @@
+PASS: 37785 assertions; 9110 transition frames.
+Infinite page, unlimited tools and skills, spawn selection/cancel, permanent holes during guardian mode, landing-only indicator, mouse look, cursor release, charge-dependent jump, boundary, return and challenge isolation.
+2026/10/25 15:43:48

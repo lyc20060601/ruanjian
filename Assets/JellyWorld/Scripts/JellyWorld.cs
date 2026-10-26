@@ -20,7 +20,7 @@ namespace JellyWorldGame
         public string mode="menu";
         public JellyBoard board;
         public JellyTile[,] tiles=new JellyTile[8,8];
-        Transform stage, hero, tileRoot, decor, effects;
+        Transform stage, hero, tileRoot, decor, effects, menuClouds, sidebarScenery;
         Canvas canvas;
         RectTransform menuUI, gameUI, modal;
         Text scoreText, moveText, goalText, toast, bestText, toolText, comboText;
@@ -36,8 +36,8 @@ namespace JellyWorldGame
         AudioSource audioSource;
         bool sound=true, paused;
         int Target { get { return LevelSpec.Score; } }
-        Color Ink { get { return new Color(.22f,.16f,.36f); } }
-        Color Purple { get { return new Color(.46f,.30f,.79f); } }
+        Color Ink { get { return new Color(.145f,.212f,.357f); } }
+        Color Purple { get { return new Color(.53f,.35f,.78f); } }
 
         void Start()
         {
@@ -67,6 +67,7 @@ namespace JellyWorldGame
             audioSource.playOnAwake=false;
             sound=PlayerPrefs.GetInt("JellyWorld.Sound",1)==1;
             InitializeAudio();
+            ApplyComfortPresentation();
             BuildLandscape();
             effects=Group("Transient sugar sparkles",transform);
             BuildBoardStage();
@@ -101,20 +102,21 @@ namespace JellyWorldGame
         void BuildLandscape()
         {
             decor=Group("Marshmallow archipelago",transform);
+            menuClouds=Group("Menu cloud scenery",decor);sidebarScenery=Group("Menu right-side scenery",decor);
             Shape("Pistachio planet",decor,new Vector3(0,-7,16),new Vector3(33,8,16),mint,true);
             Shape("Vanilla shore",decor,new Vector3(0,-7.2f,8),new Vector3(30,6,9),cream,true);
             Shape("Rose dune",decor,new Vector3(-10,-5.5f,14),new Vector3(12,7,10),blush,true);
             Shape("Lavender dune",decor,new Vector3(11,-5.2f,15),new Vector3(14,7,10),candy[4],true);
             for(int side=-1;side<=1;side+=2) {
-                for(int i=0;i<4;i++) {
+                if(side==1)for(int i=0;i<4;i++) {
                     float x=side*(7.6f+i*.9f);
-                    Shape("Cloud puff",decor,new Vector3(x,3.7f+(i%2)*.28f,6),new Vector3(2.2f,1.25f,1.1f),white,true);
+                    Shape("Cloud puff",menuClouds,new Vector3(x,3.7f+(i%2)*.28f,6),new Vector3(2.2f,1.25f,1.1f),white,true);
                 }
                 for(int i=0;i<3;i++) {
-                    float x=side*(10.1f+i*1.3f), y=-2.4f-i*.55f;
-                    Shape("Candy tree stem",decor,new Vector3(x,y-.65f,3),new Vector3(.18f,2.2f,.18f),cream);
-                    Shape("Candy tree crown",decor,new Vector3(x,y+.5f,3),new Vector3(1.5f,2.0f,1.25f),candy[(i+(side==1?2:0))%5],true);
-                    Shape("Tree sugar glint",decor,new Vector3(x-.25f,y+.85f,2.4f),new Vector3(.22f,.45f,.07f),white,true);
+                    float x=side*((side<0?12.2f:10.1f)+i*1.3f), y=-2.4f-i*.55f;
+                    Shape("Candy tree stem",side==1?sidebarScenery:decor,new Vector3(x,y-.65f,3),new Vector3(.18f,2.2f,.18f),cream);
+                    Shape("Candy tree crown",side==1?sidebarScenery:decor,new Vector3(x,y+.5f,3),new Vector3(1.5f,2.0f,1.25f),candy[(i+(side==1?2:0))%5],true);
+                    Shape("Tree sugar glint",side==1?sidebarScenery:decor,new Vector3(x-.25f,y+.85f,2.4f),new Vector3(.22f,.45f,.07f),white,true);
                 }
             }
             for(int i=0;i<22;i++) {
@@ -187,12 +189,13 @@ namespace JellyWorldGame
             ResetGuardian();
             StopAllCoroutines();ClearEffects();Time.timeScale=1;paused=false;busy=false;pointerDown=false;mode="play";
             score=0;moves=InfiniteMode?26:LevelSpec.Moves;charges=new int[]{3,2,2};activeTool=-1;selected=new Vector2Int(-1,-1);
-            board=new JellyBoard(Environment.TickCount,InfiniteMode?8:LevelSpec.Size,InfiniteMode?5:LevelSpec.Colors);
+            board=new JellyBoard(Environment.TickCount,InfiniteMode?8:LevelSpec.Size,InfiniteMode?5:LevelSpec.Colors,InfiniteMode?null:LevelSpec.CreateMask());
             BuildBoardStage();
             ClearTiles();
             ResetObjectives();
-            for(int x=0;x<BoardSize;x++) for(int y=0;y<BoardSize;y++) Spawn(x,y,board.Cells[x,y],false);
+            for(int x=0;x<BoardSize;x++) for(int y=0;y<BoardSize;y++)if(board.Contains(new Vector2Int(x,y)))Spawn(x,y,board.Cells[x,y],false);
             hero.gameObject.SetActive(false);stage.gameObject.SetActive(true);
+            menuClouds.gameObject.SetActive(false);sidebarScenery.gameObject.SetActive(false);
             menuUI.gameObject.SetActive(false);gameUI.gameObject.SetActive(true);modal.gameObject.SetActive(false);
             if(infiniteUI!=null)infiniteUI.gameObject.SetActive(false);
             HideCampaignPages();
@@ -206,14 +209,16 @@ namespace JellyWorldGame
             CancelGuardian();
             StopAllCoroutines();ClearEffects();Time.timeScale=1;paused=false;busy=false;pointerDown=false;mode="menu";
             hero.gameObject.SetActive(true);stage.gameObject.SetActive(false);
+            menuClouds.gameObject.SetActive(true);sidebarScenery.gameObject.SetActive(true);
             menuUI.gameObject.SetActive(true);gameUI.gameObject.SetActive(false);modal.gameObject.SetActive(false);
             if(infiniteUI!=null)infiniteUI.gameObject.SetActive(false);
             HideCampaignPages();
-            bestText.text="已通关 "+JellyProgress.Completed+" / "+JellyLevels.All.Length;
+            RefreshJourneyHome();
         }
         void Update()
         {
             if(mode!="play" || paused)ResetBoardGesture();
+            UpdateTileHover();
             if(mode=="range") { if(Input.GetKeyDown(KeyCode.Escape)) TogglePause(); return; }
             if(mode=="golem") { if(Input.GetKeyDown(KeyCode.Escape)) TogglePause(); return; }
             if(cam!=null) {
@@ -293,13 +298,15 @@ namespace JellyWorldGame
                 chain++;int gained=matches.Count*60*chain;score+=gained;
                 comboText.text=chain>1?"连锁 ×"+chain:"+"+gained;
                 PlaySound(JellySound.Pop,.6f,Mathf.Min(1.25f,1+(chain-1)*.06f));
+                foreach(var p in matches)if(tiles[p.x,p.y]!=null)tiles[p.x,p.y].Pulse(.14f);
+                yield return new WaitForSeconds(.07f);
                 foreach(var p in matches) {
                     var t=tiles[p.x,p.y];
                     if(t!=null)RegisterClear(p.x,p.y,t.color);
                     if(t!=null) { Burst(t.transform.position,t.color);Destroy(t.gameObject);tiles[p.x,p.y]=null; }
-                    board.Cells[p.x,p.y]=-1;
+                    board.Cells[p.x,p.y]=JellyBoard.Empty;
                 }
-                UpdateHUD();yield return new WaitForSeconds(.22f);
+                UpdateHUD();yield return new WaitForSeconds(.12f);
                 CollapseBoard();
                 yield return WaitForRefillFalls();
                 yield return new WaitForSeconds(.06f);
@@ -327,6 +334,7 @@ namespace JellyWorldGame
         public void ChooseTool(int tool)
         {
             if(mode!="play" || busy || paused) return;
+            if(tool<0 || tool>2 || !RequireTool(tool))return;
             ResetBoardGesture();CancelLandingChoice();
             if(!InfiniteMode && charges[tool]<=0) {Notice("这个道具已用完，下局会补满");return;}
             Deselect();ClearHints();
@@ -348,7 +356,7 @@ namespace JellyWorldGame
             paused=true;ResetBoardGesture();Time.timeScale=0;
             if(Guardian!=null)Guardian.SyncCursor();if(Range!=null)Range.SyncCursor();
             ShowDialog("暂停","","","继续",()=>TogglePause(),true);
-            Button("Pause audio settings",modal,"音效设置",new Vector2(0,10),new Vector2(280,52),new Color(.85f,.93f,.91f),Ink,OpenAudioSettings,21);
+            Button("Pause audio settings",modal,"音效设置",new Vector2(0,10),new Vector2(280,52),new Color(.86f,.94f,1),Ink,OpenAudioSettings,21);
         }
         void Notice(string s) { if(toast!=null)toast.text=s; }
         void UpdateHUD()
@@ -357,8 +365,9 @@ namespace JellyWorldGame
             goalText.text=InfiniteMode?"目标 —":"目标 "+Target.ToString("N0");
             progress.fillAmount=InfiniteMode?1:ObjectiveProgress();
             if(moveRule!=null)moveRule.text=InfiniteMode?"不限步数":"有效交换消耗 1 步";
-            if(chapterLabel!=null)chapterLabel.text=InfiniteMode?"无限模式":"关卡 "+level;
+            if(chapterLabel!=null)chapterLabel.text=InfiniteMode?"自由乐园":"第 "+level+" 关 · "+LevelSpec.MapName;
             RefreshToolPool();
+            RefreshObjectives();
         }
         RectTransform Rect(string name,Transform parent,Vector2 pos,Vector2 size)
         {
@@ -378,12 +387,15 @@ namespace JellyWorldGame
             t.horizontalOverflow=HorizontalWrapMode.Wrap;t.verticalOverflow=VerticalWrapMode.Overflow;t.raycastTarget=false;
             if(bold)t.fontStyle=FontStyle.Bold;return t;
         }
-        Button Button(string name,Transform parent,string value,Vector2 pos,Vector2 size,Color bg,Color fg,Action action,int fontSize=23)
+        Button Button(string name,Transform parent,string value,Vector2 pos,Vector2 size,Color bg,Color fg,Action action,int fontSize=23,bool emphasized=false)
         {
             var image=Panel(name,parent,pos,size,bg);
+            if(uiButtonMaterial!=null)image.material=uiButtonMaterial;
+            var surface=image.gameObject.AddComponent<JellyUISurface>();
+            if(emphasized)surface.style=JellyUISurface.SurfaceStyle.Primary;
             var b=image.gameObject.AddComponent<Button>();b.targetGraphic=image;
             b.navigation=new Navigation {mode=Navigation.Mode.None};
-            var colors=b.colors;colors.highlightedColor=new Color(.96f,.94f,1);colors.pressedColor=new Color(.8f,.75f,.9f);b.colors=colors;
+            var colors=b.colors;colors.highlightedColor=Color.white;colors.pressedColor=Color.white;colors.disabledColor=new Color(.96f,.96f,1);b.colors=colors;
             b.onClick.AddListener(()=>{PlaySound(JellySound.Click,.45f);action();});
             b.gameObject.AddComponent<JellyButtonFeedback>().world=this;
             Label(name+" label",b.transform,value,Vector2.zero,size-new Vector2(16,4),fontSize,fg,TextAnchor.MiddleCenter);
@@ -393,6 +405,11 @@ namespace JellyWorldGame
         {
             var r=Rect("Jelly World interface",transform,Vector2.zero,new Vector2(1600,900));
             canvas=r.gameObject.AddComponent<Canvas>();canvas.renderMode=RenderMode.ScreenSpaceOverlay;
+            canvas.additionalShaderChannels|=AdditionalCanvasShaderChannels.TexCoord1;
+            if(Application.isPlaying && uiButtonMaterial==null) {
+                var shader=Resources.Load<Shader>("SoftButton");
+                if(shader!=null)uiButtonMaterial=new Material(shader){name="Rounded candy controls"};
+            }
             var scaler=r.gameObject.AddComponent<CanvasScaler>();scaler.uiScaleMode=CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution=new Vector2(1600,900);scaler.screenMatchMode=CanvasScaler.ScreenMatchMode.Expand;
             r.gameObject.AddComponent<GraphicRaycaster>();
@@ -400,19 +417,13 @@ namespace JellyWorldGame
                 var e=new GameObject("EventSystem",typeof(EventSystem),typeof(StandaloneInputModule));e.transform.SetParent(transform);
             }
             menuUI=Rect("Home",r,Vector2.zero,new Vector2(1600,900));
-            Label("Title",menuUI,"JELLY\nWORLD",new Vector2(-411,151),new Vector2(490,260),100,Ink,TextAnchor.MiddleLeft,true);
-            Button("Start adventure",menuUI,"关卡模式",new Vector2(-441,-61),new Vector2(410,70),Purple,Color.white,ShowLevelSelect,27);
-            Button("Infinite mode entry",menuUI,"无限模式",new Vector2(-441,-153),new Vector2(410,66),new Color(.22f,.57f,.55f),Color.white,ShowInfinitePage,25);
-            Button("How to play",menuUI,"操作说明",new Vector2(-547,-241),new Vector2(198,48),new Color(1,1,1,.9f),Ink,ShowHelp,19);
-            Button("Sound",menuUI,"音效设置",new Vector2(-333,-241),new Vector2(198,48),new Color(1,1,1,.9f),Ink,OpenAudioSettings,19);
-            Button("Leaderboard",menuUI,"本地排行榜",new Vector2(-441,-309),new Vector2(410,49),new Color(1,1,1,.9f),Ink,ShowLeaderboard,21);
-            bestText=Label("Best",menuUI,"",new Vector2(-441,-369),new Vector2(410,40),20,Ink);
+            BuildExperienceHome();
             gameUI=Rect("Play HUD",r,Vector2.zero,new Vector2(1600,900));
-            var stats=Panel("Compact score bar",gameUI,new Vector2(-178,412),new Vector2(766,63),new Color(1,.99f,.97f,.94f)).transform;
-            chapterLabel=Label("World index",stats,"",new Vector2(-285,5),new Vector2(165,38),20,Ink);
-            Label("Score caption",stats,"分数",new Vector2(-164,5),new Vector2(58,30),17,Purple);
-            scoreText=Label("Score",stats,"0",new Vector2(-82,5),new Vector2(118,42),29,Ink,TextAnchor.MiddleLeft,true);
-            goalText=Label("Goal",stats,"",new Vector2(80,5),new Vector2(180,38),20,Ink);
+            var stats=Rect("Compact score bar",gameUI,new Vector2(-178,412),new Vector2(766,63));
+            chapterLabel=Label("World index",stats,"",new Vector2(-263,5),new Vector2(224,38),17,Ink);
+            Label("Score caption",stats,"分数",new Vector2(-115,5),new Vector2(50,30),17,Purple);
+            scoreText=Label("Score",stats,"0",new Vector2(-39,5),new Vector2(110,42),27,Ink,TextAnchor.MiddleLeft,true);
+            goalText=Label("Goal",stats,"",new Vector2(115,5),new Vector2(158,38),18,Ink);
             Label("Move caption",stats,"步数",new Vector2(220,5),new Vector2(60,32),18,Purple);
             moveText=Label("Moves",stats,"26",new Vector2(291,5),new Vector2(80,40),30,Ink,TextAnchor.MiddleCenter,true);
             var track=Panel("Progress track",stats,new Vector2(0,-25),new Vector2(698,5),new Color(.90f,.87f,.94f));
@@ -420,6 +431,7 @@ namespace JellyWorldGame
             progress.type=Image.Type.Filled;progress.fillMethod=Image.FillMethod.Horizontal;
             Button("Back home",gameUI,"主页",new Vector2(560,412),new Vector2(108,51),new Color(1,1,1,.94f),Ink,()=>{paused=true;Time.timeScale=0;ShowDialog("返回主页","","本局进度将不会保留","返回",ShowMenu,true,()=>{paused=false;Time.timeScale=1;modal.gameObject.SetActive(false);});},20);
             Button("Pause",gameUI,"暂停",new Vector2(689,412),new Vector2(108,51),new Color(1,1,1,.94f),Ink,TogglePause,20);
+            BuildObjectivePanel(gameUI);
             BuildToolPool(gameUI);
             Button("Hint",gameUI,"提示",new Vector2(-664,-408),new Vector2(118,48),new Color(1,1,1,.86f),Ink,()=>Hint(),19);
             toast=Label("Instruction",gameUI,"",new Vector2(-123,-408),new Vector2(880,40),20,Ink,TextAnchor.MiddleCenter);
@@ -431,7 +443,7 @@ namespace JellyWorldGame
         void ShowHelp()
         {
             ShowDialog("操作说明","",
-                "在步数内完成积分、收集和清冰目标。\n交换相邻果冻，三个同色消除，连锁加分。\n消除冰壳覆盖格即可清冰，道具同样有效。\n守护者：WASD 移动，空格跳跃，F 重踏。\n靶场：左键射击；无限模式不限道具。",
+                "拖动或点击两颗相邻果冻，三个同色即可消除。\n无效交换不扣步，连锁可获得更多分数。\n右侧逐项显示积分、收集与清冰目标。\n通关逐步解锁道具，每局自动补满。\n自由乐园全道具开放，可随时体验守护者与靶场。",
                 "开始游戏",StartChallenge,true);
         }
         void ShowDialog(string title,string subtitle,string detail,string primary,Action action,bool home,Action secondary=null,string secondaryLabel=null)
@@ -439,11 +451,11 @@ namespace JellyWorldGame
             for(int i=modal.childCount-1;i>=0;i--) {var g=modal.GetChild(i).gameObject;g.SetActive(false);Destroy(g);}
             modal.gameObject.SetActive(true);
             Panel("Veil",modal,Vector2.zero,new Vector2(6000,4000),new Color(.16f,.12f,.28f,.46f));
-            var card=Panel("Dialog card",modal,Vector2.zero,new Vector2(690,520),new Color(1,.98f,.96f)).transform;
+            var card=Card("Dialog card",modal,Vector2.zero,new Vector2(690,520),new Color(1,.98f,.96f)).transform;
             Label("Dialog heading",card,title,new Vector2(0,185),new Vector2(630,57),34,Purple,TextAnchor.MiddleCenter,true);
             Label("Dialog subtitle",card,subtitle,new Vector2(0,116),new Vector2(620,53),29,Ink,TextAnchor.MiddleCenter);
             Label("Dialog details",card,detail,new Vector2(0,15),new Vector2(610,138),21,new Color(.45f,.40f,.54f),TextAnchor.MiddleCenter);
-            Button("Dialog primary",card,primary,new Vector2(0,-119),new Vector2(480,64),Purple,Color.white,action,25);
+            Button("Dialog primary",card,primary,new Vector2(0,-119),new Vector2(480,64),Purple,Color.white,action,25,emphasized:true);
             if(home) Button("Dialog secondary",card,secondaryLabel??(secondary!=null?"继续游戏":"返回主页"),new Vector2(0,-200),new Vector2(300,45),new Color(.93f,.90f,.96f),Ink,secondary??ShowMenu,19);
         }
     }

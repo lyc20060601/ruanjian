@@ -21,7 +21,10 @@ namespace JellyWorldGame
         {
             ClearHints();Vector2Int p=Hit();if(!Inside(p))return;
             if(activeTool==0)tiles[p.x,p.y].hinted=true;
-            else if(activeTool==1)for(int i=0;i<BoardSize;i++){tiles[i,p.y].hinted=true;tiles[p.x,i].hinted=true;}
+            else if(activeTool==1)for(int i=0;i<BoardSize;i++){
+                if(tiles[i,p.y]!=null)tiles[i,p.y].hinted=true;
+                if(tiles[p.x,i]!=null)tiles[p.x,i].hinted=true;
+            }
         }
         IEnumerator RetireTool(Transform anchor,Transform model,float seconds)
         {
@@ -90,7 +93,10 @@ namespace JellyWorldGame
                 PlaySound(JellySound.Beam,.40f);StartCoroutine(FadeCross(anchor,model,beams));
             }
             var cells=new HashSet<Vector2Int>();
-            if(tool==0)cells.Add(cell);else for(int i=0;i<BoardSize;i++){cells.Add(new Vector2Int(i,cell.y));cells.Add(new Vector2Int(cell.x,i));}
+            if(tool==0)cells.Add(cell);else for(int i=0;i<BoardSize;i++){
+                var horizontal=new Vector2Int(i,cell.y);if(board.Contains(horizontal))cells.Add(horizontal);
+                var vertical=new Vector2Int(cell.x,i);if(board.Contains(vertical))cells.Add(vertical);
+            }
             ActingTool=-1;
             yield return Resolve(cells,false);
         }
@@ -108,54 +114,58 @@ namespace JellyWorldGame
         {
             BeginToolAction(2);activeTool=-1;Notice("洗牌");
             var anchor=ToolAnchor("Shuffle action");var model=JellyToolModels.Create(this,2,anchor);model.localPosition=new Vector3(0,0,-2.1f);
-            var pieces=new JellyTile[BoardSize*BoardSize];var from=new Vector3[BoardSize*BoardSize];var gathered=new Vector3[BoardSize*BoardSize];
-            for(int y=0;y<BoardSize;y++)for(int x=0;x<BoardSize;x++) {
-                int i=x+y*BoardSize;var tile=tiles[x,y];pieces[i]=tile;from[i]=tile.transform.localPosition;
+            var cells=new List<Vector2Int>();
+            for(int y=0;y<BoardSize;y++)for(int x=0;x<BoardSize;x++)if(board.Contains(new Vector2Int(x,y)))cells.Add(new Vector2Int(x,y));
+            int total=cells.Count;
+            var pieces=new JellyTile[total];var from=new Vector3[total];var gathered=new Vector3[total];
+            for(int i=0;i<total;i++) {
+                var cell=cells[i];var tile=tiles[cell.x,cell.y];pieces[i]=tile;from[i]=tile.transform.localPosition;
                 tile.enabled=false;tile.selected=false;tile.hinted=false;
-                float angle=i*2.39996f;float radius=.32f+Mathf.Sqrt(i/(float)(BoardSize*BoardSize))*1.20f;
+                float angle=i*2.39996f;float radius=.32f+Mathf.Sqrt(i/(float)total)*1.20f;
                 gathered[i]=new Vector3(Mathf.Cos(angle)*radius,Mathf.Sin(angle)*radius,-.65f-i*.007f);
             }
             for(float t=0;t<.25f;t+=Time.deltaTime) {
                 float u=Mathf.SmoothStep(0,1,t/.25f);model.localScale=Vector3.one*u;
-                for(int i=0;i<BoardSize*BoardSize;i++){pieces[i].transform.localPosition=Vector3.Lerp(from[i],gathered[i],u);pieces[i].transform.localScale=Vector3.one*Mathf.Lerp(.88f,.21f,u);}
+                for(int i=0;i<total;i++){pieces[i].transform.localPosition=Vector3.Lerp(from[i],gathered[i],u);pieces[i].transform.localScale=Vector3.one*Mathf.Lerp(.88f,.21f,u);}
                 yield return null;
             }
             for(float t=0;t<.18f;t+=Time.deltaTime) {
                 float u=t/.18f;model.localRotation=Quaternion.Euler(0,0,-u*230);
-                for(int i=0;i<BoardSize*BoardSize;i++)pieces[i].transform.localPosition=Quaternion.Euler(0,0,u*240)*gathered[i];
+                for(int i=0;i<total;i++)pieces[i].transform.localPosition=Quaternion.Euler(0,0,u*240)*gathered[i];
                 yield return null;
             }
-            int[] order=new int[BoardSize*BoardSize];for(int i=0;i<BoardSize*BoardSize;i++)order[i]=i;
+            int[] order=new int[total];for(int i=0;i<total;i++)order[i]=i;
             var rng=new System.Random(System.Environment.TickCount);
             bool valid=false;
             for(int attempt=0;attempt<1024;attempt++) {
-                for(int i=BoardSize*BoardSize-1;i>0;i--){int j=rng.Next(i+1);int temp=order[i];order[i]=order[j];order[j]=temp;}
-                for(int i=0;i<BoardSize*BoardSize;i++)board.Cells[i%BoardSize,i/BoardSize]=pieces[order[i]].color;
+                for(int i=total-1;i>0;i--){int j=rng.Next(i+1);int temp=order[i];order[i]=order[j];order[j]=temp;}
+                for(int i=0;i<total;i++){var cell=cells[i];board.Cells[cell.x,cell.y]=pieces[order[i]].color;}
                 Vector2Int a,b;
                 if(board.Matches().Count==0 && board.FindMove(out a,out b)){valid=true;break;}
             }
             if(!valid) {
                 // Extremely skewed boards retain the existing safe-generation fallback.
                 board.Generate();
-                for(int i=0;i<BoardSize*BoardSize;i++) {
+                for(int i=0;i<total;i++) {
+                    var cell=cells[i];
                     var old=pieces[order[i]];old.gameObject.SetActive(false);Destroy(old.gameObject);
-                    pieces[order[i]]=Spawn(i%BoardSize,i/BoardSize,board.Cells[i%BoardSize,i/BoardSize],false);pieces[order[i]].enabled=false;
+                    pieces[order[i]]=Spawn(cell.x,cell.y,board.Cells[cell.x,cell.y],false);pieces[order[i]].enabled=false;
                     pieces[order[i]].transform.localPosition=gathered[i];
                 }
             }
-            var starts=new Vector3[BoardSize*BoardSize];
-            for(int i=0;i<BoardSize*BoardSize;i++) {
-                int x=i%BoardSize,y=i/BoardSize;var tile=pieces[order[i]];tiles[x,y]=tile;tile.x=x;tile.y=y;
-                tile.target=Pos(x,y);starts[i]=tile.transform.localPosition;
+            var starts=new Vector3[total];
+            for(int i=0;i<total;i++) {
+                var cell=cells[i];var tile=pieces[order[i]];tiles[cell.x,cell.y]=tile;tile.x=cell.x;tile.y=cell.y;
+                tile.target=Pos(cell.x,cell.y);starts[i]=tile.transform.localPosition;
             }
             PlaySound(JellySound.Shuffle,.48f);
             for(float t=0;t<.30f;t+=Time.deltaTime) {
                 float u=Mathf.SmoothStep(0,1,t/.30f);model.localScale=Vector3.one*(1-u);
-                for(int i=0;i<BoardSize*BoardSize;i++){var tile=tiles[i%BoardSize,i/BoardSize];tile.transform.localPosition=Vector3.Lerp(starts[i],tile.target,u);tile.transform.localScale=Vector3.one*Mathf.Lerp(.21f,.88f,u);}
+                for(int i=0;i<total;i++){var cell=cells[i];var tile=tiles[cell.x,cell.y];tile.transform.localPosition=Vector3.Lerp(starts[i],tile.target,u);tile.transform.localScale=Vector3.one*Mathf.Lerp(.21f,.88f,u);}
                 yield return null;
             }
-            for(int i=0;i<BoardSize*BoardSize;i++) {
-                var tile=tiles[i%BoardSize,i/BoardSize];tile.transform.localPosition=tile.target;tile.transform.localRotation=Quaternion.identity;
+            for(int i=0;i<total;i++) {
+                var cell=cells[i];var tile=tiles[cell.x,cell.y];tile.transform.localPosition=tile.target;tile.transform.localRotation=Quaternion.identity;
                 tile.born=Time.time-2;tile.enabled=true;
             }
             Destroy(anchor.gameObject);ActingTool=-1;busy=false;idle=0;Notice("");UpdateHUD();

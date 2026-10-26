@@ -4,7 +4,9 @@ namespace JellyWorldGame
     public class JellyTile : MonoBehaviour
     {
         public int x,y,color;
-        public bool selected, hinted;
+        public bool selected, hinted, hovered, pressed;
+        float interactionScale;
+        public Vector2 pointerLean;
         public Vector3 target;
         public float born;
         public bool IsFalling {get;private set;}
@@ -46,9 +48,12 @@ namespace JellyWorldGame
             float bounce=IsFalling?squash:Mathf.Sin(age*19)*Mathf.Exp(-age*4)*.16f;
             float tap=Time.time-tapTime;
             if(tap<.22f)bounce-=tapStrength*Mathf.Sin(tap/.22f*Mathf.PI);
-            float pulse=selected ? .12f+.035f*Mathf.Sin(Time.time*9) : hinted ? .06f+.045f*Mathf.Sin(Time.time*7) : .012f*Mathf.Sin(Time.time*2+x+y);
+            float desired=pressed?-.045f:selected?.065f:hovered?.035f:hinted?.03f+.018f*Mathf.Sin(Time.time*5):0;
+            interactionScale=Mathf.Lerp(interactionScale,desired,1-Mathf.Exp(-24*Time.deltaTime));
+            float pulse=interactionScale;
             transform.localScale=new Vector3(.88f-bounce*.5f+pulse,.88f+bounce+pulse,.82f-bounce*.25f);
-            transform.localRotation=Quaternion.Euler(0,0,selected?Mathf.Sin(Time.time*9)*4:0);
+            var tilt=Quaternion.Euler(pressed?-pointerLean.y*5:0,pressed?pointerLean.x*5:0,selected?Mathf.Sin(Time.time*4)*1.3f:0);
+            transform.localRotation=Quaternion.Slerp(transform.localRotation,tilt,1-Mathf.Exp(-22*Time.deltaTime));
         }
     }
 }

@@ -1,35 +1,34 @@
-# ruanjian · Jelly World
+# Jelly World · 果冻漫游
 
-课程小组协作的 Unity 益智消除游戏工程。
+Unity 单机三消游戏，包含异形关卡、道具成长、守护者探索和糖弹靶场。
 
-**当前是可在 Unity Editor 中运行的源码工程，还不是已发布的网页版。** 网页版需要安装 WebGL Build Support、导出构建，再部署到静态网站。仓库已包含导出菜单，见 [团队接手说明](Docs/TEAM_HANDOFF.md)。
+当前分支为 **Unity 2022.3.42f1c1** 的可审查开发版本。开发按五个步骤整理，见 [任务与提交对照](Docs/DEVELOPMENT_2026-10-25.md)。
 
-![棋盘与道具池](Docs/images/board.png)
+![首页](Docs/images/review-20261025/home.png)
 
-## 打开工程
+## 打开和试玩
 
-1. 安装 Git 和 Unity Hub，克隆仓库：
-
+1. 克隆仓库并切换到本开发分支：
    ```bash
    git clone https://github.com/lyc20060601/ruanjian.git
+   cd ruanjian
+   git switch feature/candy-journey-review
    ```
+2. 用 Unity Hub 添加仓库根目录，使用 `ProjectSettings/ProjectVersion.txt` 指定的编辑器。
+3. 等待依赖还原，打开 `Assets/Scenes/JellyWorld.unity`，点击 Play。
+4. 导出 Windows：退出 Play Mode，执行 **Jelly World > Build Windows playtest**。输出为 `Builds/CandyOpen/JellyWorld.exe`；构建后可使用根目录 `试玩明亮糖果.bat`。
 
-2. 在 Unity Hub 中添加仓库根目录。工程版本为 **Unity 2022.3.42f1c1**，记录在 `ProjectSettings/ProjectVersion.txt`。
-3. 等待 Unity 还原依赖并导入素材，打开 `Assets/Scenes/JellyWorld.unity`，点击 Play。
+仓库提供源码与素材；缓存及生成的 Windows 程序不进入 Git。**克隆后需要先用 Unity 运行或构建。** WebGL 需要另装 Build Support 并单独验收，目前没有已发布的网页游玩链接。
 
-已包含完整 `Assets`、`Packages`、`ProjectSettings` 和 `.meta` 文件，不需要原作者的 `Library` 缓存。
+## 当前体验
 
-## 当前功能
+- 三个章节、12 个异形关卡：从 6×6 / 4 色逐步过渡到 10×10 / 7 色，组合积分、颜色收集和清冰目标。
+- 进度、最佳星星与本地排行榜；成长按每关最佳星星累计，重复通关不会重复增加星星。
+- 到达第 2/3/4/6/8 关分别解锁锤子、洗牌、十字星、守护者和靶场，每局补满。自由乐园全部开放。
+- 连续拖动、落下时预输入、无效交换不扣步、暂停及音量/简洁特效设置。
+- 暖白、蓝、粉、蜜桃和淡紫配色；立体地图预览、圆润按钮；主要信息直接排在场景背景上。
 
-- 12 个逐步解锁关卡：从 6×6 / 4 色到 10×10 / 7 色。
-- 积分、颜色收集和清冰目标；进度、星级、最高分保存。
-- 相邻交换、三连消除、连锁、补位、按住拖动及动画期间预输入。
-- 果冻锤、十字光束、洗牌、守护者、糖弹靶场；无限模式。
-- 守护者跑动、蓄力跳跃、第一／第三人称、两段碎冰。
-- 独立靶场场景、糖弹射击、返回后同步棋盘。
-- 本地排行榜、暂停、音效设置。
-
-进度与排行榜是本机数据，不是联网账号或全服排行榜。
+![游戏画面](Docs/images/review-20261025/board.png)
 
 ## 操作
 
@@ -41,13 +40,12 @@
 | 靶场 | 鼠标瞄准，按住左键发射 |
 | 暂停 | Esc |
 
-## 协作与后续交付
+## 检查与协作
 
-每项工作新建分支，完成后通过 Pull Request 合并；场景、预制体与素材必须连同 `.meta` 提交。缓存和个人作业提交包不应进入仓库。
+- [开发任务、分步提交及审查重点](Docs/DEVELOPMENT_2026-10-25.md)
+- [团队接手、验证命令与构建方式](Docs/TEAM_HANDOFF.md)
+- [本次验收记录](Docs/verification/2026-10-25/RESULTS.md)
+- [模块与玩法说明](Assets/JellyWorld/README.md)
+- [素材来源与授权](THIRD_PARTY_NOTICES.md) · [素材规则](AGENTS.md)
 
-- [团队接手、模块划分与 WebGL 发布步骤](Docs/TEAM_HANDOFF.md)
-- [玩法及实现说明](Assets/JellyWorld/README.md)
-- [第三方素材和字体](THIRD_PARTY_NOTICES.md)
-- [素材选用规则](AGENTS.md)
-
-**网页版下一步：**安装 WebGL 模块 → 执行 `Jelly World > Build WebGL` → 浏览器验证 `Builds/WebGL` → 发布到 GitHub Pages 等静态托管服务。目前还没有浏览器游玩 URL。
+`feature/unique-level-maps-unity6` 保持独立。本分支移植其中的地图玩法，并保留 2022.3 工程与较温和的关卡参数。

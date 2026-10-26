@@ -183,7 +183,8 @@ namespace JellyWorldGame
             input=Vector2.ClampMagnitude(input,1);gaitSpeed=input.magnitude;
             Vector3 direction=Quaternion.Euler(0,yaw,0)*new Vector3(input.x,0,input.y);
             Vector3 before=actor.position,after=before+direction*(sprint?3.7f:2.25f)*Mathf.Min(dt,.1f);
-            after.x=Mathf.Clamp(after.x,-world.BoardLimit,world.BoardLimit);after.z=Mathf.Clamp(after.z,-world.BoardLimit,world.BoardLimit);actor.position=after;
+            after.x=Mathf.Clamp(after.x,-world.BoardLimit,world.BoardLimit);after.z=Mathf.Clamp(after.z,-world.BoardLimit,world.BoardLimit);
+            after=world.ConstrainGuardianMove(before,after);actor.position=after;
             if(direction.sqrMagnitude>.01f) {
                 if(!FirstPerson)actor.rotation=Quaternion.Slerp(actor.rotation,Quaternion.LookRotation(direction),1-Mathf.Exp(-15*dt));
                 if((after-before).sqrMagnitude>.000001f) {stepClock-=dt;if(stepClock<=0){Impact(false);stepClock=sprint?.20f:.31f;}}
@@ -201,7 +202,8 @@ namespace JellyWorldGame
         {
             Vector3 direction=Quaternion.Euler(0,yaw,0)*(aim.sqrMagnitude>.01f?new Vector3(aim.normalized.x,0,aim.normalized.y):Vector3.forward);
             Vector3 end=actor.position+direction*JumpDistance(Charge01);
-            end.x=Mathf.Clamp(end.x,-world.BoardLimit,world.BoardLimit);end.z=Mathf.Clamp(end.z,-world.BoardLimit,world.BoardLimit);end.y=GroundAt(end);return end;
+            end.x=Mathf.Clamp(end.x,-world.BoardLimit,world.BoardLimit);end.z=Mathf.Clamp(end.z,-world.BoardLimit,world.BoardLimit);
+            end=world.NearestPlayableWorldPoint(end);end.y=GroundAt(end);return end;
         }
         Vector3 JumpPoint(Vector3 start,Vector3 end,float height,float t)
         {
@@ -253,7 +255,7 @@ namespace JellyWorldGame
         float GroundAt(Vector3 p)
         {
             int x=Mathf.Clamp(Mathf.RoundToInt(p.x+world.BoardHalf),0,world.BoardSize-1),y=Mathf.Clamp(Mathf.RoundToInt(p.z+world.BoardHalf),0,world.BoardSize-1);
-            return world.board.Cells[x,y]<0?.14f:.65f;
+            return !world.IsPlayableCell(x,y) || world.board.Cells[x,y]<0?.14f:.65f;
         }
         void Impact(bool heavy)
         {

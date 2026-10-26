@@ -5,6 +5,7 @@ namespace JellyWorldGame
     public partial class JellyWorld
     {
         public int BoardSize {get{return board!=null?board.Width:8;}}
+        public int PlayableCellCount {get{return board!=null?board.PlayableCount:BoardSize*BoardSize;}}
         public float BoardHalf {get{return (BoardSize-1)*.5f;}}
         public float BoardLimit {get{return BoardHalf+.12f;}}
         public JellyLevel LevelSpec {get{return JellyLevels.Get(level);}}
@@ -19,15 +20,41 @@ namespace JellyWorldGame
         InputField playerInput;
         int rankLevel=1;
         bool Inside(Vector2Int p){return board!=null && board.Contains(p);}
+        public bool IsPlayableCell(int x,int y){return board!=null && board.Contains(new Vector2Int(x,y));}
+        bool IsPlayableWorldPoint(Vector3 point)
+        {
+            int x=Mathf.RoundToInt(point.x+BoardHalf),y=Mathf.RoundToInt(point.z+BoardHalf);
+            return IsPlayableCell(x,y);
+        }
+        public Vector3 ConstrainGuardianMove(Vector3 before,Vector3 desired)
+        {
+            if(IsPlayableWorldPoint(desired))return desired;
+            var xOnly=new Vector3(desired.x,before.y,before.z);if(IsPlayableWorldPoint(xOnly))return xOnly;
+            var zOnly=new Vector3(before.x,before.y,desired.z);if(IsPlayableWorldPoint(zOnly))return zOnly;
+            return before;
+        }
+        public Vector3 NearestPlayableWorldPoint(Vector3 desired)
+        {
+            if(IsPlayableWorldPoint(desired))return desired;
+            float best=float.MaxValue;Vector3 result=desired;
+            for(int x=0;x<BoardSize;x++)for(int y=0;y<BoardSize;y++)if(IsPlayableCell(x,y)) {
+                var candidate=new Vector3(x-BoardHalf,desired.y,y-BoardHalf);
+                float distance=(new Vector2(candidate.x-desired.x,candidate.z-desired.z)).sqrMagnitude;
+                if(distance<best){best=distance;result=candidate;}
+            }
+            return result;
+        }
         void BuildBoardStage()
         {
             if(stage!=null){stage.gameObject.SetActive(false);if(Application.isPlaying)Destroy(stage.gameObject);else DestroyImmediate(stage.gameObject);}
             stage=Group("Jelly board "+BoardSize+"x"+BoardSize,transform);stage.localRotation=Quaternion.Euler(7,-7,0);
-            Shape("Lavender tray",stage,new Vector3(0,0,.70f),new Vector3(BoardSize+1.05f,BoardSize+1.05f,.65f),plum);
-            Shape("Cream rim",stage,new Vector3(0,0,.42f),new Vector3(BoardSize+.86f,BoardSize+.86f,.35f),cream);
-            Shape("Grape soda inset",stage,new Vector3(0,0,.24f),new Vector3(BoardSize+.46f,BoardSize+.46f,.26f),blush);
-            for(int x=0;x<BoardSize;x++)for(int y=0;y<BoardSize;y++)
-                Shape("Sugar pocket",stage,Pos(x,y)+new Vector3(0,0,.16f),new Vector3(.96f,.96f,.13f),white);
+            for(int x=0;x<BoardSize;x++)for(int y=0;y<BoardSize;y++) {
+                if(board!=null && !board.Contains(new Vector2Int(x,y)))continue;
+                Vector3 p=Pos(x,y);
+                Shape("Map base "+x+","+y,stage,p+new Vector3(0,0,.72f),new Vector3(1.10f,1.10f,.54f),plum);
+                Shape("Map rim "+x+","+y,stage,p+new Vector3(0,0,.43f),new Vector3(1.02f,1.02f,.30f),cream);
+                Shape("Sugar pocket "+x+","+y,stage,p+new Vector3(0,0,.22f),new Vector3(.94f,.94f,.14f),white);
+            }
             tileRoot=Group("Living jelly pieces",stage);
         }
         void ResetObjectives()
@@ -37,7 +64,7 @@ namespace JellyWorldGame
             frost=new bool[BoardSize,BoardSize];frostVisuals=new GameObject[BoardSize,BoardSize];FrostRemaining=InfiniteMode?0:LevelSpec.Frost;
             var random=new System.Random(level*241+37);int count=0;
             while(count<FrostRemaining) {
-                int x=random.Next(BoardSize),y=random.Next(BoardSize);if(frost[x,y])continue;
+                int x=random.Next(BoardSize),y=random.Next(BoardSize);if(!IsPlayableCell(x,y) || frost[x,y])continue;
                 frost[x,y]=true;count++;
                 var shell=Shape("Ice shell "+x+","+y,stage,Pos(x,y),new Vector3(.98f,.98f,.98f),iceShell);
                 shell.GetComponent<Renderer>().shadowCastingMode=UnityEngine.Rendering.ShadowCastingMode.Off;
@@ -91,6 +118,7 @@ namespace JellyWorldGame
         }
         void FinishLevel(bool win)
         {
+            int previousUnlocked=JellyProgress.Unlocked;
             mode="result";PlaySound(win?JellySound.Win:JellySound.Lose,.6f);int stars=0,bonus=0;
             if(win) {
                 stars=1+(moves>=Mathf.CeilToInt(LevelSpec.Moves*.2f)?1:0)+(moves>=Mathf.CeilToInt(LevelSpec.Moves*.45f)?1:0);
@@ -98,18 +126,14 @@ namespace JellyWorldGame
             }
             PlayerPrefs.SetInt("JellyWorld.Best",Mathf.Max(score,PlayerPrefs.GetInt("JellyWorld.Best",0)));PlayerPrefs.Save();UpdateHUD();
             string detail=win?new string('★',stars)+new string('☆',3-stars)+"\n得分 "+score+"（剩余步数奖励 +"+bonus+"）":ObjectiveSummary()+"\n本局得分 "+score;
+            if(win) {var unlocked=JellyJourney.UnlockMessage(previousUnlocked,JellyProgress.Unlocked);detail+="\n"+(unlocked.Length>0?unlocked:JellyJourney.RankName+" · ★ "+JellyJourney.TotalStars+" / 36");}
             bool final=level==JellyLevels.All.Length;
             ShowDialog(win?"第 "+level+" 关完成":"步数已用完",LevelSpec.Name,detail,win?(final?"返回关卡":"下一关"):"重试",
                 ()=>{if(win){if(final)ShowLevelSelect();else StartLevel(level+1);}else NewGame();},true,ShowLevelSelect,"关卡列表");
         }
         void BuildCampaignUI(Transform parent)
         {
-            levelsUI=Rect("Level selection",parent,Vector2.zero,new Vector2(1600,900));
-            Panel("Level backdrop",levelsUI,Vector2.zero,new Vector2(2400,1500),new Color(.90f,.95f,.98f,.97f));
-            Label("Level title",levelsUI,"关卡",new Vector2(-610,375),new Vector2(300,70),45,Ink);
-            Button("Level back",levelsUI,"主页",new Vector2(669,379),new Vector2(156,52),Color.white,Ink,ShowMenu,22);
-            Button("Level ranking",levelsUI,"排行榜",new Vector2(480,379),new Vector2(170,52),Color.white,Ink,ShowLeaderboard,22);
-            levelContent=Rect("Level cards",levelsUI,Vector2.zero,new Vector2(1550,700));levelsUI.gameObject.SetActive(false);
+            BuildJourneyUI(parent);
             ranksUI=Rect("Local leaderboard",parent,Vector2.zero,new Vector2(1600,900));
             Panel("Rank backdrop",ranksUI,Vector2.zero,new Vector2(2400,1500),new Color(.94f,.96f,.98f,.98f));
             Label("Rank title",ranksUI,"本地排行榜",new Vector2(-534,376),new Vector2(430,65),40,Ink);
@@ -131,25 +155,7 @@ namespace JellyWorldGame
         public void ShowLevelSelect()
         {
             ShowMenu();mode="levels";menuUI.gameObject.SetActive(false);hero.gameObject.SetActive(false);levelsUI.gameObject.SetActive(true);
-            ClearUIChildren(levelContent);
-            for(int i=0;i<JellyLevels.All.Length;i++) {
-                var c=JellyLevels.All[i];bool open=c.Id<=JellyProgress.Unlocked;
-                Vector2 p=new Vector2(-561+(i%4)*374,220-(i/4)*235);
-                var card=Panel("Level "+c.Id,levelContent,p,new Vector2(348,208),open?Color.white:new Color(.83f,.86f,.90f));
-                Label("Level number",card.transform,c.Id.ToString("00")+"   "+c.Name,new Vector2(0,64),new Vector2(306,42),25,open?Ink:new Color(.47f,.50f,.56f));
-                Label("Level dimensions",card.transform,c.Size+"×"+c.Size+"  ·  "+c.Colors+" 色  ·  "+c.Moves+" 步",new Vector2(0,21),new Vector2(306,33),18,Ink);
-                var goals=new System.Collections.Generic.List<string>();
-                if(c.Frost>0)goals.Add("清冰 "+c.Frost);
-                if(c.ColorA>=0)goals.Add(JellyLevels.ColorNames[c.ColorA]+" "+c.AmountA);
-                if(c.ColorB>=0)goals.Add(JellyLevels.ColorNames[c.ColorB]+" "+c.AmountB);
-                string goal=goals.Count==0?"积分挑战":string.Join(" · ",goals.ToArray());
-                Label("Level goal",card.transform,goal+"  /  "+c.Score+" 分",new Vector2(0,-18),new Vector2(306,35),17,Purple);
-                int n=c.Id;var button=card.gameObject.AddComponent<Button>();button.targetGraphic=card;button.interactable=open;
-                button.navigation=new Navigation{mode=Navigation.Mode.None};button.onClick.AddListener(()=>{PlaySound(JellySound.Click,.45f);StartLevel(n);});
-                button.gameObject.AddComponent<JellyButtonFeedback>().world=this;
-                int stars=JellyProgress.Stars(c.Id);
-                Label("Level progress",card.transform,open?(stars>0?new string('★',stars)+new string('☆',3-stars)+"  "+JellyProgress.Best(c.Id)+"分":"未通关"):"完成前一关解锁",new Vector2(0,-66),new Vector2(306,36),19,Ink);
-            }
+            RenderJourneyChapter((JellyProgress.Unlocked-1)/4);
         }
         public void ShowLeaderboard()
         {
