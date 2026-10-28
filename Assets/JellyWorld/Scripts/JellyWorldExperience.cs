@@ -76,7 +76,7 @@ namespace JellyWorldGame
             homeUnlock=Label("Home next unlock",card,"",new Vector2(0,-131),new Vector2(514,30),17,new Color(.36f,.40f,.54f));
             Button("How to play",menuUI,"玩法说明",new Vector2(-651,-331),new Vector2(192,49),Porcelain,Ink,ShowHelp,19);
             Button("Sound",menuUI,"舒适设置",new Vector2(-449,-331),new Vector2(192,49),Porcelain,Ink,OpenAudioSettings,19);
-            Button("Leaderboard",menuUI,"本地记录",new Vector2(-247,-331),new Vector2(192,49),Porcelain,Ink,ShowLeaderboard,19);
+            Button("Leaderboard",menuUI,"排行榜",new Vector2(-247,-331),new Vector2(192,49),Porcelain,Ink,ShowLeaderboard,19);
             Label("Home sandbox note",menuUI,"自由乐园 · 全道具开放，无步数限制",new Vector2(366,-350),new Vector2(590,38),18,Ink,TextAnchor.MiddleCenter);
             Button("Quit game",menuUI,"退出",new Vector2(676,366),new Vector2(130,46),Porcelain,Ink,()=>Application.Quit(),19);
         }
@@ -98,7 +98,7 @@ namespace JellyWorldGame
             chapterTitle=Label("Level title",levelsUI,"",new Vector2(-470,318),new Vector2(560,76),46,Ink,TextAnchor.MiddleLeft,true);
             chapterNote=Label("Chapter subtitle",levelsUI,"",new Vector2(122,319),new Vector2(480,48),20,new Color(.23f,.39f,.64f));
             Button("Level back",levelsUI,"主页",new Vector2(675,384),new Vector2(145,47),Porcelain,Ink,ShowMenu,20);
-            Button("Level ranking",levelsUI,"记录",new Vector2(515,384),new Vector2(145,47),Porcelain,Ink,ShowLeaderboard,20);
+            Button("Level ranking",levelsUI,"排行榜",new Vector2(515,384),new Vector2(145,47),Porcelain,Ink,ShowLeaderboard,20);
             chapterTabs.Clear();
             for(int i=0;i<3;i++) {
                 int chapter=i;var button=Button("Chapter tab "+i,levelsUI,(i+1).ToString("00")+"   "+JellyJourney.ChapterNames[i],new Vector2(-493+i*493,226),new Vector2(470,60),Porcelain,Ink,()=>RenderJourneyChapter(chapter),22);

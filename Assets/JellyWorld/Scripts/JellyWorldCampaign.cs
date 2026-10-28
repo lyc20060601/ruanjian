@@ -137,7 +137,7 @@ namespace JellyWorldGame
             ranksUI=Rect("Local leaderboard",parent,Vector2.zero,new Vector2(1600,900));
             Panel("Rank backdrop",ranksUI,Vector2.zero,new Vector2(2400,1500),new Color(.94f,.96f,.98f,.98f));
             Label("Rank title",ranksUI,"本地排行榜",new Vector2(-534,376),new Vector2(430,65),40,Ink);
-            Label("Rank scope",ranksUI,"仅保存本机 · 按关卡分别排名",new Vector2(-487,317),new Vector2(525,37),18,Purple);
+            Label("Rank scope",ranksUI,"仅保存本机 · 每关历史前 6 次成绩",new Vector2(-487,317),new Vector2(525,37),18,Purple);
             Button("Rank back",ranksUI,"返回关卡",new Vector2(661,377),new Vector2(178,52),Color.white,Ink,ShowLevelSelect,21);
             var input=Panel("Player name",ranksUI,new Vector2(394,313),new Vector2(305,46),Color.white);
             playerInput=input.gameObject.AddComponent<InputField>();playerInput.characterLimit=12;

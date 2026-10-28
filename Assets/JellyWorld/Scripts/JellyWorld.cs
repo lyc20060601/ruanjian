@@ -185,6 +185,7 @@ namespace JellyWorldGame
         public void NewGame()
         {
             SaveInfiniteBest();
+            infiniteRunRecorded=false;
             CancelRange();rangeCharges=1;
             ResetGuardian();
             StopAllCoroutines();ClearEffects();Time.timeScale=1;paused=false;busy=false;pointerDown=false;mode="play";

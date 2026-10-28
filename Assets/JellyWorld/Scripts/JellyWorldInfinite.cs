@@ -5,13 +5,15 @@ namespace JellyWorldGame
     public partial class JellyWorld
     {
         public bool InfiniteMode {get;private set;}
+        bool infiniteRunRecorded;
         RectTransform infiniteUI;
         Text infiniteBest;
         public void StartChallenge() {SaveInfiniteBest();InfiniteMode=false;level=1;NewGame();}
         public void StartInfinite() {SaveInfiniteBest();InfiniteMode=true;score=0;level=1;NewGame();}
         void SaveInfiniteBest()
         {
-            if(!InfiniteMode || board==null)return;
+            if(!InfiniteMode || board==null || infiniteRunRecorded)return;
+            infiniteRunRecorded=true;
             JellyProgress.RecordInfinite(score);
             int best=PlayerPrefs.GetInt("JellyWorld.InfiniteBest",0);
             if(score>best){PlayerPrefs.SetInt("JellyWorld.InfiniteBest",score);PlayerPrefs.Save();}

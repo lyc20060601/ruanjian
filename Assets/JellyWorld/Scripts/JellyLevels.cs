@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 namespace JellyWorldGame
 {
@@ -66,6 +67,7 @@ namespace JellyWorldGame
     [Serializable] class JellyRunStore {public List<JellyRun> rows=new List<JellyRun>();}
     public static class JellyProgress
     {
+        public const int RankingLimit=6;
         const string Prefix="JellyWorld.Campaign.";
         static JellyRunStore cache;
         static JellyRunStore Store {
@@ -74,6 +76,9 @@ namespace JellyWorldGame
                 try {cache=JsonUtility.FromJson<JellyRunStore>(PlayerPrefs.GetString(Prefix+"Ranks",""));}
                 catch {cache=null;}
                 if(cache==null || cache.rows==null)cache=new JellyRunStore();
+                // Stable ordering keeps earlier runs ahead when scores tie, including old saves.
+                cache.rows=cache.rows.Where(r=>r!=null).GroupBy(r=>r.level)
+                    .SelectMany(group=>group.OrderByDescending(r=>r.score).Take(RankingLimit)).ToList();
                 return cache;
             }
         }
@@ -99,18 +104,14 @@ namespace JellyWorldGame
         public static void RecordInfinite(int score){if(score>0)Record(0,score,0);}
         static void Record(int level,int score,int stars)
         {
-            var row=Store.rows.Find(r=>r.level==level && r.player==PlayerName);
-            if(row!=null && row.score>=score)return;
-            if(row==null){row=new JellyRun{level=level,player=PlayerName};Store.rows.Add(row);}
-            row.score=score;row.stars=stars;row.date=DateTime.Now.ToString("yyyy-MM-dd");
-            Store.rows.Sort((a,b)=>b.score.CompareTo(a.score));
-            if(Store.rows.Count>250)Store.rows.RemoveRange(250,Store.rows.Count-250);
+            Store.rows.Add(new JellyRun{level=level,player=PlayerName,score=score,stars=stars,date=DateTime.Now.ToString("yyyy-MM-dd")});
+            var overflow=Store.rows.Where(r=>r.level==level).OrderByDescending(r=>r.score).Skip(RankingLimit).ToList();
+            foreach(var row in overflow)Store.rows.Remove(row);
             PlayerPrefs.SetString(Prefix+"Ranks",JsonUtility.ToJson(Store));PlayerPrefs.Save();
         }
         public static List<JellyRun> Ranking(int level)
         {
-            var result=Store.rows.FindAll(r=>r.level==level);result.Sort((a,b)=>b.score.CompareTo(a.score));
-            if(result.Count>10)result.RemoveRange(10,result.Count-10);return result;
+            return Store.rows.Where(r=>r.level==level).OrderByDescending(r=>r.score).Take(RankingLimit).ToList();
         }
     }
 }
