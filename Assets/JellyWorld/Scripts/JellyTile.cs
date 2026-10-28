@@ -4,6 +4,8 @@ namespace JellyWorldGame
     public class JellyTile : MonoBehaviour
     {
         public int x,y,color;
+        public JellySpecial special;
+        public Transform specialMark;
         public bool selected, hinted, hovered, pressed;
         float interactionScale;
         public Vector2 pointerLean;
@@ -54,6 +56,7 @@ namespace JellyWorldGame
             transform.localScale=new Vector3(.88f-bounce*.5f+pulse,.88f+bounce+pulse,.82f-bounce*.25f);
             var tilt=Quaternion.Euler(pressed?-pointerLean.y*5:0,pressed?pointerLean.x*5:0,selected?Mathf.Sin(Time.time*4)*1.3f:0);
             transform.localRotation=Quaternion.Slerp(transform.localRotation,tilt,1-Mathf.Exp(-22*Time.deltaTime));
+            if(specialMark!=null)specialMark.localScale=Vector3.one*(1+.08f*Mathf.Sin(Time.time*5+color));
         }
     }
 }

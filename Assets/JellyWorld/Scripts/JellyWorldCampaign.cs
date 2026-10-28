@@ -122,14 +122,15 @@ namespace JellyWorldGame
             mode="result";PlaySound(win?JellySound.Win:JellySound.Lose,.6f);int stars=0,bonus=0;
             if(win) {
                 stars=1+(moves>=Mathf.CeilToInt(LevelSpec.Moves*.2f)?1:0)+(moves>=Mathf.CeilToInt(LevelSpec.Moves*.45f)?1:0);
-                bonus=moves*40;score+=bonus;JellyProgress.Win(level,score,stars);
+                bonus=moves*300;score+=bonus;JellyProgress.Win(level,score,stars);
             }
             PlayerPrefs.SetInt("JellyWorld.Best",Mathf.Max(score,PlayerPrefs.GetInt("JellyWorld.Best",0)));PlayerPrefs.Save();UpdateHUD();
             string detail=win?new string('★',stars)+new string('☆',3-stars)+"\n得分 "+score+"（剩余步数奖励 +"+bonus+"）":ObjectiveSummary()+"\n本局得分 "+score;
             if(win) {var unlocked=JellyJourney.UnlockMessage(previousUnlocked,JellyProgress.Unlocked);detail+="\n"+(unlocked.Length>0?unlocked:JellyJourney.RankName+" · ★ "+JellyJourney.TotalStars+" / 36");}
             bool final=level==JellyLevels.All.Length;
-            ShowDialog(win?"第 "+level+" 关完成":"步数已用完",LevelSpec.Name,detail,win?(final?"返回关卡":"下一关"):"重试",
-                ()=>{if(win){if(final)ShowLevelSelect();else StartLevel(level+1);}else NewGame();},true,ShowLevelSelect,"关卡列表");
+            if(win)ShowDialog("第 "+level+" 关完成",LevelSpec.Name,detail,final?"返回关卡":"下一关",
+                ()=>{if(final)ShowLevelSelect();else StartLevel(level+1);},true,()=>StartLevel(level),"重玩本关",ShowLevelSelect,"关卡列表");
+            else ShowDialog("步数已用完",LevelSpec.Name,detail,"重试",NewGame,true,ShowLevelSelect,"关卡列表");
         }
         void BuildCampaignUI(Transform parent)
         {

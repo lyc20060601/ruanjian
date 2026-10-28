@@ -174,6 +174,34 @@ namespace JellyWorldGame
             g.transform.localScale=new Vector3(.88f,.88f,.82f);
             tiles[x,y]=t;return t;
         }
+        void GiveSpecial(JellyTile tile,JellySpecial kind)
+        {
+            tile.special=kind;
+            var mark=Group("Special "+kind,tile.transform);
+            mark.localPosition=new Vector3(0,0,-.57f);
+            tile.specialMark=mark;
+            if(kind==JellySpecial.Row || kind==JellySpecial.Column) {
+                var line=Shape("Sugar stripe",mark,Vector3.zero,
+                    kind==JellySpecial.Row?new Vector3(.57f,.12f,.06f):new Vector3(.12f,.57f,.06f),white,true);
+                line.GetComponent<Renderer>().shadowCastingMode=ShadowCastingMode.Off;
+            } else if(kind==JellySpecial.Blast) {
+                for(int i=0;i<4;i++) {
+                    float angle=i*Mathf.PI*.5f;
+                    Shape("Blast sparkle",mark,new Vector3(Mathf.Cos(angle)*.22f,Mathf.Sin(angle)*.22f,0),
+                        new Vector3(.15f,.15f,.08f),white,true);
+                }
+                Shape("Blast center",mark,Vector3.zero,new Vector3(.20f,.20f,.09f),plum,true);
+            } else {
+                Shape("Rainbow center",mark,Vector3.zero,new Vector3(.30f,.30f,.09f),white,true);
+                for(int i=0;i<6;i++) {
+                    float angle=i*Mathf.PI/3;
+                    Shape("Rainbow gem",mark,new Vector3(Mathf.Cos(angle)*.27f,Mathf.Sin(angle)*.27f,0),
+                        new Vector3(.13f,.13f,.08f),candy[i%candy.Length],true);
+                }
+            }
+            JellyVfx.Ring(this,effects,tile.transform.position,stage.TransformDirection(Vector3.back),.6f,.34f,Color.white);
+            tile.Pulse(.18f);
+        }
         void ClearTiles()
         {
             for(int i=tileRoot.childCount-1;i>=0;i--) {
@@ -290,28 +318,49 @@ namespace JellyWorldGame
                 board.Swap(a,b);SwapVisual(a,b);Notice("需要三个同色相连");
                 Tone(210,.08f);yield return new WaitForSeconds(.23f);busy=false;RefreshToolPool();yield break;
             }
-            if(!InfiniteMode)moves--;yield return Resolve(matches,true);
+            if(!InfiniteMode)moves--;yield return Resolve(matches,true,b);
         }
-        public IEnumerator Resolve(HashSet<Vector2Int> matches,bool usedMove)
+        public IEnumerator Resolve(HashSet<Vector2Int> matches,bool usedMove,Vector2Int? preferred=null)
         {
-            busy=true;int chain=0;UpdateHUD();
+            busy=true;int chain=0;bool natural=usedMove;UpdateHUD();
             while(matches.Count>0) {
-                chain++;int gained=matches.Count*60*chain;score+=gained;
+                chain++;
+                var creation=natural?JellySpecialRules.FindCreation(board,matches,preferred??new Vector2Int(-1,-1)):
+                    new JellySpecialCreation(new Vector2Int(-1,-1),JellySpecial.None);
+                bool triggered=false;
+                foreach(var p in matches)if(tiles[p.x,p.y]!=null && tiles[p.x,p.y].special!=JellySpecial.None){triggered=true;break;}
+                var cleared=JellySpecialRules.Expand(board,tiles,matches);
+                foreach(var p in cleared)if(tiles[p.x,p.y]!=null && tiles[p.x,p.y].special!=JellySpecial.None){triggered=true;break;}
+                if(triggered)creation.kind=JellySpecial.None;
+                if(triggered) {
+                    foreach(var p in matches) {
+                        var t=tiles[p.x,p.y];
+                        if(t!=null && t.special!=JellySpecial.None)
+                            JellyVfx.Ring(this,effects,t.transform.position,stage.TransformDirection(Vector3.back),
+                                t.special==JellySpecial.Rainbow?BoardSize:.95f,.38f,Color.white);
+                    }
+                    PlaySound(JellySound.Beam,.45f);
+                }
+                if(creation.kind!=JellySpecial.None && tiles[creation.cell.x,creation.cell.y].special==JellySpecial.None)
+                    cleared.Remove(creation.cell);
+                else creation.kind=JellySpecial.None;
+                int gained=cleared.Count*60*chain;score+=gained;
                 comboText.text=chain>1?"连锁 ×"+chain:"+"+gained;
                 PlaySound(JellySound.Pop,.6f,Mathf.Min(1.25f,1+(chain-1)*.06f));
-                foreach(var p in matches)if(tiles[p.x,p.y]!=null)tiles[p.x,p.y].Pulse(.14f);
+                foreach(var p in cleared)if(tiles[p.x,p.y]!=null)tiles[p.x,p.y].Pulse(.14f);
                 yield return new WaitForSeconds(.07f);
-                foreach(var p in matches) {
+                foreach(var p in cleared) {
                     var t=tiles[p.x,p.y];
                     if(t!=null)RegisterClear(p.x,p.y,t.color);
                     if(t!=null) { Burst(t.transform.position,t.color);Destroy(t.gameObject);tiles[p.x,p.y]=null; }
                     board.Cells[p.x,p.y]=JellyBoard.Empty;
                 }
+                if(creation.kind!=JellySpecial.None)GiveSpecial(tiles[creation.cell.x,creation.cell.y],creation.kind);
                 UpdateHUD();yield return new WaitForSeconds(.12f);
                 CollapseBoard();
                 yield return WaitForRefillFalls();
                 yield return new WaitForSeconds(.06f);
-                matches=board.Matches();
+                matches=board.Matches();natural=true;preferred=null;
             }
             comboText.text="";busy=false;idle=0;UpdateHUD();
             if(!InfiniteMode && (ObjectivesMet || moves<=0)) { Finish(ObjectivesMet);yield break; }
@@ -444,10 +493,10 @@ namespace JellyWorldGame
         void ShowHelp()
         {
             ShowDialog("操作说明","",
-                "拖动或点击两颗相邻果冻，三个同色即可消除。\n无效交换不扣步，连锁可获得更多分数。\n右侧逐项显示积分、收集与清冰目标。\n通关逐步解锁道具，每局自动补满。\n自由乐园全道具开放，可随时体验守护者与靶场。",
+                "拖动或点击两颗相邻果冻，三个同色即可消除。\n四连留下行/列特效，T 型留下范围爆炸，五连留下全盘消除。\n特殊果冻再次被消除时触发，连锁可获得更多分数。\n右侧逐项显示积分、收集与清冰目标。\n通关逐步解锁道具，每局自动补满。",
                 "开始游戏",StartChallenge,true);
         }
-        void ShowDialog(string title,string subtitle,string detail,string primary,Action action,bool home,Action secondary=null,string secondaryLabel=null)
+        void ShowDialog(string title,string subtitle,string detail,string primary,Action action,bool home,Action secondary=null,string secondaryLabel=null,Action tertiary=null,string tertiaryLabel=null)
         {
             for(int i=modal.childCount-1;i>=0;i--) {var g=modal.GetChild(i).gameObject;g.SetActive(false);Destroy(g);}
             modal.gameObject.SetActive(true);
@@ -456,8 +505,9 @@ namespace JellyWorldGame
             Label("Dialog heading",card,title,new Vector2(0,185),new Vector2(630,57),34,Purple,TextAnchor.MiddleCenter,true);
             Label("Dialog subtitle",card,subtitle,new Vector2(0,116),new Vector2(620,53),29,Ink,TextAnchor.MiddleCenter);
             Label("Dialog details",card,detail,new Vector2(0,15),new Vector2(610,138),21,new Color(.45f,.40f,.54f),TextAnchor.MiddleCenter);
-            Button("Dialog primary",card,primary,new Vector2(0,-119),new Vector2(480,64),Purple,Color.white,action,25,emphasized:true);
-            if(home) Button("Dialog secondary",card,secondaryLabel??(secondary!=null?"继续游戏":"返回主页"),new Vector2(0,-200),new Vector2(300,45),new Color(.93f,.90f,.96f),Ink,secondary??ShowMenu,19);
+            Button("Dialog primary",card,primary,new Vector2(0,tertiary==null?-119:-106),new Vector2(480,tertiary==null?64:56),Purple,Color.white,action,25,emphasized:true);
+            if(home) Button("Dialog secondary",card,secondaryLabel??(secondary!=null?"继续游戏":"返回主页"),new Vector2(0,tertiary==null?-200:-170),new Vector2(tertiary==null?300:360,45),new Color(.93f,.90f,.96f),Ink,secondary??ShowMenu,19);
+            if(tertiary!=null)Button("Dialog tertiary",card,tertiaryLabel??"关卡列表",new Vector2(0,-225),new Vector2(300,42),new Color(.93f,.90f,.96f),Ink,tertiary,18);
         }
     }
 }

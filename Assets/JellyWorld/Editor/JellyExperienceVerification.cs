@@ -37,6 +37,45 @@ public static class JellyExperienceVerification
         Check((int)rank.Invoke(null,new object[]{36}) == 5, "all stars rank");
         Debug.Log("JELLY JOURNEY RULES PASS: unlock boundaries, sandbox, existing players and growth thresholds");
         VerifyLeaderboard();
+        VerifySpecialRules();
+    }
+
+    static void VerifySpecialRules()
+    {
+        var board=new JellyBoard(42,6,4);
+        Action reset=()=>{for(int x=0;x<6;x++)for(int y=0;y<6;y++)board.Cells[x,y]=(x+y)%4;};
+        reset();
+        var four=new HashSet<Vector2Int>();
+        for(int x=1;x<=4;x++){board.Cells[x,2]=0;four.Add(new Vector2Int(x,2));}
+        var created=JellySpecialRules.FindCreation(board,four,new Vector2Int(3,2));
+        Check(created.kind==JellySpecial.Row && created.cell==new Vector2Int(3,2),"four horizontal pieces leave a row special at the swapped tile");
+        reset();four.Clear();
+        for(int y=1;y<=4;y++){board.Cells[2,y]=1;four.Add(new Vector2Int(2,y));}
+        Check(JellySpecialRules.FindCreation(board,four,new Vector2Int(2,3)).kind==JellySpecial.Column,"four vertical pieces leave a column special");
+        reset();var five=new HashSet<Vector2Int>();
+        for(int x=0;x<5;x++){board.Cells[x,2]=0;five.Add(new Vector2Int(x,2));}
+        Check(JellySpecialRules.FindCreation(board,five,new Vector2Int(2,2)).kind==JellySpecial.Rainbow,"five pieces leave a rainbow special");
+        reset();var tee=new HashSet<Vector2Int>();
+        for(int x=1;x<=3;x++){board.Cells[x,3]=1;tee.Add(new Vector2Int(x,3));}
+        for(int y=1;y<=3;y++){board.Cells[2,y]=1;tee.Add(new Vector2Int(2,y));}
+        Check(JellySpecialRules.FindCreation(board,tee,new Vector2Int(2,3)).kind==JellySpecial.Blast,"T match leaves a blast special");
+        var tiles=new JellyTile[6,6];var roots=new List<GameObject>();
+        try {
+            for(int x=0;x<6;x++)for(int y=0;y<6;y++) {
+                var go=new GameObject("Special QA tile");roots.Add(go);
+                tiles[x,y]=go.AddComponent<JellyTile>();
+            }
+            tiles[2,3].special=JellySpecial.Blast;
+            var expanded=JellySpecialRules.Expand(board,tiles,new HashSet<Vector2Int>{new Vector2Int(2,3)});
+            Check(expanded.Count==9,"blast clears a 3 by 3 area once");
+            tiles[3,3].special=JellySpecial.Row;
+            expanded=JellySpecialRules.Expand(board,tiles,new HashSet<Vector2Int>{new Vector2Int(2,3)});
+            Check(expanded.Count==12,"blast triggers another special without duplicate cells");
+            tiles[2,3].special=JellySpecial.Rainbow;
+            expanded=JellySpecialRules.Expand(board,tiles,new HashSet<Vector2Int>{new Vector2Int(2,3)});
+            Check(expanded.Count==36,"rainbow clears every playable cell");
+        } finally {foreach(var go in roots)UnityEngine.Object.DestroyImmediate(go);}
+        Debug.Log("JELLY SPECIAL RULES PASS: four, T, five, chain explosions and rainbow");
     }
 
     static void VerifyLeaderboard()

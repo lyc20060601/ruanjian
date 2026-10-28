@@ -100,6 +100,11 @@ public static class JellyCampaignVerification
             w.NewGame();w.score=JellyLevels.Get(1).Score;
             JellyProgress.PlayerName="Campaign QA";yield return w.Resolve(new HashSet<Vector2Int>(),false);
             Check(w.mode=="result" && JellyProgress.Stars(1)>0 && JellyProgress.Unlocked>=2,"win saves stars and unlocks next level");
+            Check(w.score==JellyLevels.Get(1).Score+w.moves*300,"remaining moves award 300 points each");
+            var replay=GameObject.Find("Dialog secondary");
+            Check(replay!=null && replay.GetComponentInChildren<UnityEngine.UI.Text>().text=="重玩本关","victory shows replay button");
+            replay.GetComponent<UnityEngine.UI.Button>().onClick.Invoke();
+            Check(w.mode=="play" && w.level==1 && w.score==0 && w.moves==JellyLevels.Get(1).Moves,"replay restarts the same level");
             Check(JellyProgress.Ranking(1).Exists(r=>r.player=="Campaign QA"),"completed run on local level ranking");
             JellyProgress.RecordInfinite(444);JellyProgress.RecordInfinite(222);
             Check(JellyProgress.Ranking(0).Find(r=>r.player=="Campaign QA").score==444,"separate infinite best record");
