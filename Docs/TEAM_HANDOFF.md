@@ -65,7 +65,7 @@ git push -u origin feature/你的功能名
 - 资源和 `.meta` 一起提交；移动资源优先在 Unity 内操作，不要重新生成旧 GUID。
 - Unity 已启用 Visible Meta Files 和文本序列化。
 - 包版本变更时同时提交 `manifest.json` 与 `packages-lock.json`。
-- 已移除运行游戏不需要的 Unity MCP Git 包；`Newtonsoft Json` 使用 Unity Registry 依赖。包版本变更需同步提交清单和锁文件。
+- Unity MCP 编辑器插件固定为 `v10.2.0`，连接和启动方式见 [Unity MCP](UNITY_MCP.md)。运行游戏不需要启动 MCP 服务。`Newtonsoft Json` 使用 Unity Registry 依赖；包版本变更需同步提交清单和锁文件。
 
 ## 导出 WebGL
 
