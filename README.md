@@ -44,6 +44,7 @@ Unity 单机三消游戏，包含异形关卡、道具成长、守护者探索�
 ## 检查与协作
 
 - [开发任务、分步提交及审查重点](Docs/DEVELOPMENT_2026-10-25.md)
+- [大地图尺寸、难度参数与验证方法](Docs/LARGE_MAPS.md)
 - [团队接手、验证命令与构建方式](Docs/TEAM_HANDOFF.md)
 - [本次验收记录](Docs/verification/2026-10-25/RESULTS.md)
 - [模块与玩法说明](Assets/JellyWorld/README.md)
