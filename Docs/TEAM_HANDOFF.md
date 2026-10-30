@@ -4,11 +4,11 @@
 
 本次上传的是 Unity 源码、场景、素材及配置，不包含个人作业提交包、缓存或账号信息。仓库根目录可直接由 Unity Hub 打开。
 
-项目版本为 `2022.3.42f1c1`。原制作环境尚未安装 WebGL Build Support，未生成可运行的 WebGL 构建。**源码上传不等于网页交付完成。**
+项目版本为 Unity 6.3 LTS `6000.3.24f1`。尚未生成可运行的 WebGL 构建。**源码上传不等于网页交付完成。**
 
 ## 本分支的 Windows 试玩与自动验收
 
-当前分支为 `feature/candy-journey-review`；开发任务与逐步提交见 [审查顺序](DEVELOPMENT_2026-10-25.md)。
+当前交付位于 `main`；糖果旅程的原开发任务与逐步提交见 [审查顺序](DEVELOPMENT_2026-10-25.md)，大地图和 Unity 6 升级来自 `feature/unique-level-maps-unity6`。
 
 Windows：退出 Play Mode，执行 `Jelly World > Build Windows playtest`，输出 `Builds/CandyOpen/JellyWorld.exe`。仓库不包含构建产物，首次需自行构建；构建后双击根目录 `试玩明亮糖果.bat`。
 
@@ -38,7 +38,7 @@ Windows：退出 Play Mode，执行 `Jelly World > Build Windows playtest`，输
 | 音效与素材 | `JellyWorldAudio.cs`、`Audio/SOURCES.md` | 网页音频、音量、素材来源 |
 | 验收 | `Editor/*Verification.cs` | 自动回归与实际浏览器、人工验收 |
 
-上述目录都在 `Assets/JellyWorld` 内，运行时代码在 `Scripts` 内。
+上述目录都在 `Assets/JellyWorld` 内，运行时代码在 `Scripts` 内。12 关地图模板定义在 `JellyLevels.cs` 的 `MapRows` 中：`#` 表示有效格，`.` 表示缺口；当前尺寸为 8×8～12×12。
 
 ## Git 协作
 
@@ -57,7 +57,7 @@ git push -u origin feature/你的功能名
 - 资源和 `.meta` 一起提交；移动资源优先在 Unity 内操作，不要重新生成旧 GUID。
 - Unity 已启用 Visible Meta Files 和文本序列化。
 - 包版本变更时同时提交 `manifest.json` 与 `packages-lock.json`。
-- 制作时使用的 Unity MCP 编辑器包仍保留，运行游戏不需要 MCP 服务。若小组决定移除，在分支中同步修改依赖和锁文件。
+- 已移除运行游戏不需要的 Unity MCP Git 包；`Newtonsoft Json` 使用 Unity Registry 依赖。包版本变更需同步提交清单和锁文件。
 
 ## 导出 WebGL
 

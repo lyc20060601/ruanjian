@@ -9,7 +9,7 @@ public static class JellyWebBuild
     {
         if(EditorApplication.isPlaying){Debug.LogError("Stop Play Mode before building WebGL.");return;}
         if(!BuildPipeline.IsBuildTargetSupported(BuildTargetGroup.WebGL,BuildTarget.WebGL)) {
-            Debug.LogError("WebGL Build Support is not installed. Add it to this Unity 2022.3 editor in Unity Hub, then run Jelly World / Build WebGL.");
+            Debug.LogError("WebGL Build Support is not installed. Add it to this Unity 6.3 LTS editor in Unity Hub, then run Jelly World / Build WebGL.");
             return;
         }
         Directory.CreateDirectory("Builds/WebGL");

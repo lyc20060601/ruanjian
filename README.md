@@ -2,17 +2,16 @@
 
 Unity 单机三消游戏，包含异形关卡、道具成长、守护者探索和糖弹靶场。
 
-当前分支为 **Unity 2022.3.42f1c1** 的可审查开发版本。开发按五个步骤整理，见 [任务与提交对照](Docs/DEVELOPMENT_2026-10-25.md)。
+当前 `main` 使用 **Unity 6.3 LTS（6000.3.24f1）**。地图放大、特殊果冻、道具成长、章节界面和排行榜改动已经合并。
 
 ![首页](Docs/images/review-20261025/home.png)
 
 ## 打开和试玩
 
-1. 克隆仓库并切换到本开发分支：
+1. 克隆仓库：
    ```bash
    git clone https://github.com/lyc20060601/ruanjian.git
    cd ruanjian
-   git switch feature/candy-journey-review
    ```
 2. 用 Unity Hub 添加仓库根目录，使用 `ProjectSettings/ProjectVersion.txt` 指定的编辑器。
 3. 等待依赖还原，打开 `Assets/Scenes/JellyWorld.unity`，点击 Play。
@@ -22,7 +21,7 @@ Unity 单机三消游戏，包含异形关卡、道具成长、守护者探索�
 
 ## 当前体验
 
-- 三个章节、12 个异形关卡：从 6×6 / 4 色逐步过渡到 10×10 / 7 色，组合积分、颜色收集和清冰目标。
+- 三个章节、12 个异形关卡：从 8×8 / 4 色逐步过渡到 12×12 / 7 色，有效格数最多 112，组合积分、颜色收集和清冰目标。
 - 四连生成行/列特效，T 型生成范围爆炸特效，五连生成全盘消除特效；特殊果冻再次消除时会触发连锁效果。
 - 进度、最佳星星与本地排行榜；每关保留历史前 6 次通关成绩，同一昵称可多次入榜。成长按每关最佳星星累计，重复通关不会重复增加星星。
 - 到达第 2/3/4/6/8 关分别解锁锤子、洗牌、十字星、守护者和靶场，每局补满。自由乐园全部开放。
@@ -50,4 +49,4 @@ Unity 单机三消游戏，包含异形关卡、道具成长、守护者探索�
 - [模块与玩法说明](Assets/JellyWorld/README.md)
 - [素材来源与授权](THIRD_PARTY_NOTICES.md) · [素材规则](AGENTS.md)
 
-`feature/unique-level-maps-unity6` 保持独立。本分支移植其中的地图玩法，并保留 2022.3 工程与较温和的关卡参数。
+大地图与 Unity 6 升级来自 `feature/unique-level-maps-unity6`；糖果旅程、特殊果冻和体验优化来自 `feature/candy-journey-review`，现已共同合入 `main`。
