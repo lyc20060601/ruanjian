@@ -8,8 +8,8 @@ namespace JellyWorldGame
         bool infiniteRunRecorded;
         RectTransform infiniteUI;
         Text infiniteBest;
-        public void StartChallenge() {SaveInfiniteBest();InfiniteMode=false;level=1;NewGame();}
-        public void StartInfinite() {SaveInfiniteBest();InfiniteMode=true;score=0;level=1;NewGame();}
+        public void StartChallenge() {SaveInfiniteBest();LeaveRace();InfiniteMode=false;level=1;NewGame();}
+        public void StartInfinite() {SaveInfiniteBest();LeaveRace();InfiniteMode=true;score=0;level=1;NewGame();}
         void SaveInfiniteBest()
         {
             if(!InfiniteMode || board==null || infiniteRunRecorded)return;

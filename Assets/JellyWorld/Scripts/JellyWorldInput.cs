@@ -111,6 +111,11 @@ namespace JellyWorldGame
                 pointerDown=false;dragSource=null;
             }
         }
-        void OnApplicationFocus(bool focused){if(!focused)ResetBoardGesture();}
+        void OnApplicationFocus(bool focused)
+        {
+            if(focused)return;
+            ResetBoardGesture();
+            if(RaceMode && mode=="play" && !paused)TogglePause();
+        }
     }
 }

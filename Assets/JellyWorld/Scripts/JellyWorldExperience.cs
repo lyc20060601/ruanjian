@@ -17,7 +17,7 @@ namespace JellyWorldGame
         Material uiButtonMaterial;
         RectTransform toolPoolLayout;
         public bool ReducedEffects {get;private set;}
-        public bool IsToolUnlocked(int index){return JellyJourney.CanUseTool(index,JellyProgress.Unlocked,InfiniteMode);}
+        public bool IsToolUnlocked(int index){return !RaceMode && JellyJourney.CanUseTool(index,JellyProgress.Unlocked,InfiniteMode);}
         public void SetReducedEffects(bool value)
         {ReducedEffects=value;PlayerPrefs.SetInt("JellyWorld.Comfort.ReducedEffects",value?1:0);PlayerPrefs.Save();}
         Color Accent {get{return new Color(.25f,.73f,.96f);}}
@@ -77,6 +77,7 @@ namespace JellyWorldGame
             Button("How to play",menuUI,"玩法说明",new Vector2(-651,-331),new Vector2(192,49),Porcelain,Ink,ShowHelp,19);
             Button("Sound",menuUI,"舒适设置",new Vector2(-449,-331),new Vector2(192,49),Porcelain,Ink,OpenAudioSettings,19);
             Button("Leaderboard",menuUI,"排行榜",new Vector2(-247,-331),new Vector2(192,49),Porcelain,Ink,ShowLeaderboard,19);
+            Button("Race mode entry",menuUI,"计时竞速  →",new Vector2(366,-286),new Vector2(390,64),Purple,Color.white,ShowRaceLobby,25,emphasized:true);
             Label("Home sandbox note",menuUI,"自由乐园 · 全道具开放，无步数限制",new Vector2(366,-350),new Vector2(590,38),18,Ink,TextAnchor.MiddleCenter);
             Button("Quit game",menuUI,"退出",new Vector2(676,366),new Vector2(130,46),Porcelain,Ink,()=>Application.Quit(),19);
         }
@@ -177,7 +178,7 @@ namespace JellyWorldGame
         bool RequireTool(int index)
         {
             if(IsToolUnlocked(index))return true;
-            Notice("通过第 "+(JellyJourney.ToolUnlockLevel(index)-1)+" 关解锁"+JellyJourney.ToolNames[index]);return false;
+            Notice(RaceMode?"竞速模式仅靠消除与连锁得分，不使用道具":"通过第 "+(JellyJourney.ToolUnlockLevel(index)-1)+" 关解锁"+JellyJourney.ToolNames[index]);return false;
         }
     }
 }

@@ -35,7 +35,7 @@ namespace JellyWorldGame
         Camera cam;
         AudioSource audioSource;
         bool sound=true, paused;
-        int Target { get { return LevelSpec.Score; } }
+        int Target { get { return RaceMode?RaceTarget:LevelSpec.Score; } }
         Color Ink { get { return new Color(.145f,.212f,.357f); } }
         Color Purple { get { return new Color(.53f,.35f,.78f); } }
 
@@ -217,8 +217,8 @@ namespace JellyWorldGame
             CancelRange();rangeCharges=1;
             ResetGuardian();
             StopAllCoroutines();ClearEffects();Time.timeScale=1;paused=false;busy=false;pointerDown=false;mode="play";
-            score=0;moves=InfiniteMode?26:LevelSpec.Moves;charges=new int[]{3,2,2};activeTool=-1;selected=new Vector2Int(-1,-1);
-            board=new JellyBoard(Environment.TickCount,InfiniteMode?8:LevelSpec.Size,InfiniteMode?5:LevelSpec.Colors,InfiniteMode?null:LevelSpec.CreateMask());
+            score=0;moves=UnlimitedMoves?26:LevelSpec.Moves;charges=new int[]{3,2,2};activeTool=-1;selected=new Vector2Int(-1,-1);
+            board=new JellyBoard(Environment.TickCount,UnlimitedMoves?8:LevelSpec.Size,UnlimitedMoves?5:LevelSpec.Colors,UnlimitedMoves?null:LevelSpec.CreateMask());
             BuildBoardStage();
             ClearTiles();
             ResetObjectives();
@@ -227,13 +227,16 @@ namespace JellyWorldGame
             menuClouds.gameObject.SetActive(false);sidebarScenery.gameObject.SetActive(false);
             menuUI.gameObject.SetActive(false);gameUI.gameObject.SetActive(true);modal.gameObject.SetActive(false);
             if(infiniteUI!=null)infiniteUI.gameObject.SetActive(false);
+            if(raceUI!=null)raceUI.gameObject.SetActive(false);
             HideCampaignPages();
-            Notice(InfiniteMode?"交换相邻果冻，三个同色消除":ObjectiveSummary());
+            BeginRaceRun();
+            Notice(RaceMode?"计时开始！交换果冻，尽快达到目标分数":InfiniteMode?"交换相邻果冻，三个同色消除":ObjectiveSummary());
             UpdateHUD();Tone(520,.13f);idle=0;
         }
         public void ShowMenu()
         {
             SaveInfiniteBest();
+            LeaveRace();
             CancelRange();
             CancelGuardian();
             StopAllCoroutines();ClearEffects();Time.timeScale=1;paused=false;busy=false;pointerDown=false;mode="menu";
@@ -246,6 +249,7 @@ namespace JellyWorldGame
         }
         void Update()
         {
+            TickRace();
             if(mode!="play" || paused)ResetBoardGesture();
             UpdateTileHover();
             if(mode=="range") { if(Input.GetKeyDown(KeyCode.Escape)) TogglePause(); return; }
@@ -354,14 +358,14 @@ namespace JellyWorldGame
                 board.Swap(a,b);SwapVisual(a,b);Notice("需要三个同色相连");
                 Tone(210,.08f);yield return new WaitForSeconds(.23f);busy=false;RefreshToolPool();yield break;
             }
-            if(!InfiniteMode)moves--;yield return Resolve(matches,true,b);
+            if(!UnlimitedMoves)moves--;yield return Resolve(matches,true,b);
         }
         public IEnumerator Resolve(HashSet<Vector2Int> matches,bool usedMove,Vector2Int? preferred=null)
         {
             busy=true;int chain=0;bool natural=usedMove,finishing=false;UpdateHUD();
             while(true) {
                 if(matches.Count==0) {
-                    if(!InfiniteMode && (ObjectivesMet || moves<=0)) {
+                    if(!UnlimitedMoves && (ObjectivesMet || moves<=0)) {
                         finishing=true;
                         matches=RemainingSpecials();
                     }
@@ -390,6 +394,7 @@ namespace JellyWorldGame
                     cleared.Remove(creation.cell);
                 else creation.kind=JellySpecial.None;
                 int gained=cleared.Count*60*chain;score+=gained;
+                CheckRaceScore();
                 comboText.text=chain>1?"连锁 ×"+chain:"+"+gained;
                 PlaySound(JellySound.Pop,.6f,Mathf.Min(1.25f,1+(chain-1)*.06f));
                 foreach(var p in cleared)if(tiles[p.x,p.y]!=null)tiles[p.x,p.y].Pulse(.14f);
@@ -405,10 +410,12 @@ namespace JellyWorldGame
                 CollapseBoard();
                 yield return WaitForRefillFalls();
                 yield return new WaitForSeconds(.06f);
+                if(RaceMode && RaceCompleted)break;
                 matches=board.Matches();natural=!finishing;preferred=null;
             }
             comboText.text="";busy=false;idle=0;UpdateHUD();
-            if(!InfiniteMode && (ObjectivesMet || moves<=0)) { Finish(ObjectivesMet);yield break; }
+            if(RaceMode && RaceCompleted) { FinishRace();yield break; }
+            if(!UnlimitedMoves && (ObjectivesMet || moves<=0)) { Finish(ObjectivesMet);yield break; }
             Vector2Int ma,mb;
             if(!board.FindMove(out ma,out mb)) {Notice("无可用组合，自动洗牌");Shuffle(false);}
             else Notice("");
@@ -455,8 +462,9 @@ namespace JellyWorldGame
         public void TogglePause()
         {
             if(mode!="play" && mode!="golem" && mode!="range")return;
-            if(paused) {paused=false;Time.timeScale=1;modal.gameObject.SetActive(false);if(Guardian!=null)Guardian.SyncCursor();if(Range!=null)Range.SyncCursor();return;}
+            if(paused) {paused=false;SyncRacePause();Time.timeScale=1;modal.gameObject.SetActive(false);if(Guardian!=null)Guardian.SyncCursor();if(Range!=null)Range.SyncCursor();return;}
             paused=true;ResetBoardGesture();Time.timeScale=0;
+            SyncRacePause();
             if(Guardian!=null)Guardian.SyncCursor();if(Range!=null)Range.SyncCursor();
             ShowDialog("暂停","","","继续",()=>TogglePause(),true);
             Button("Pause audio settings",modal,"音效设置",new Vector2(0,10),new Vector2(280,52),new Color(.86f,.94f,1),Ink,OpenAudioSettings,21);
@@ -464,13 +472,14 @@ namespace JellyWorldGame
         void Notice(string s) { if(toast!=null)toast.text=s; }
         void UpdateHUD()
         {
-            scoreText.text=score.ToString("N0");moveText.text=InfiniteMode?"∞":moves.ToString("00");
+            scoreText.text=score.ToString("N0");moveText.fontSize=30;moveText.text=UnlimitedMoves?"∞":moves.ToString("00");
             goalText.text=InfiniteMode?"目标 —":"目标 "+Target.ToString("N0");
             progress.fillAmount=InfiniteMode?1:ObjectiveProgress();
-            if(moveRule!=null)moveRule.text=InfiniteMode?"不限步数":"有效交换消耗 1 步";
-            if(chapterLabel!=null)chapterLabel.text=InfiniteMode?"自由乐园":"第 "+level+" 关 · "+LevelSpec.MapName;
+            if(moveRule!=null)moveRule.text=RaceMode?"达标停表 · 暂停不计时":InfiniteMode?"不限步数":"有效交换消耗 1 步";
+            if(chapterLabel!=null)chapterLabel.text=RaceMode?"计时竞速":InfiniteMode?"自由乐园":"第 "+level+" 关 · "+LevelSpec.MapName;
             RefreshToolPool();
             RefreshObjectives();
+            RefreshRaceHUD();
         }
         RectTransform Rect(string name,Transform parent,Vector2 pos,Vector2 size)
         {
@@ -527,12 +536,12 @@ namespace JellyWorldGame
             Label("Score caption",stats,"分数",new Vector2(-115,5),new Vector2(50,30),17,Purple);
             scoreText=Label("Score",stats,"0",new Vector2(-39,5),new Vector2(110,42),27,Ink,TextAnchor.MiddleLeft,true);
             goalText=Label("Goal",stats,"",new Vector2(115,5),new Vector2(158,38),18,Ink);
-            Label("Move caption",stats,"步数",new Vector2(220,5),new Vector2(60,32),18,Purple);
-            moveText=Label("Moves",stats,"26",new Vector2(291,5),new Vector2(80,40),30,Ink,TextAnchor.MiddleCenter,true);
+            moveCaption=Label("Move caption",stats,"步数",new Vector2(220,5),new Vector2(60,32),18,Purple);
+            moveText=Label("Moves",stats,"26",new Vector2(309,5),new Vector2(116,40),30,Ink,TextAnchor.MiddleCenter,true);
             var track=Panel("Progress track",stats,new Vector2(0,-25),new Vector2(698,5),new Color(.90f,.87f,.94f));
             progress=Panel("Progress",track.transform,Vector2.zero,new Vector2(698,5),new Color(.95f,.57f,.69f));
             progress.type=Image.Type.Filled;progress.fillMethod=Image.FillMethod.Horizontal;
-            Button("Back home",gameUI,"主页",new Vector2(560,412),new Vector2(108,51),new Color(1,1,1,.94f),Ink,()=>{paused=true;Time.timeScale=0;ShowDialog("返回主页","","本局进度将不会保留","返回",ShowMenu,true,()=>{paused=false;Time.timeScale=1;modal.gameObject.SetActive(false);});},20);
+            Button("Back home",gameUI,"主页",new Vector2(560,412),new Vector2(108,51),new Color(1,1,1,.94f),Ink,()=>{paused=true;SyncRacePause();Time.timeScale=0;ShowDialog("返回主页","","本局进度将不会保留","返回",ShowMenu,true,()=>{paused=false;SyncRacePause();Time.timeScale=1;modal.gameObject.SetActive(false);});},20);
             Button("Pause",gameUI,"暂停",new Vector2(689,412),new Vector2(108,51),new Color(1,1,1,.94f),Ink,TogglePause,20);
             BuildObjectivePanel(gameUI);
             BuildToolPool(gameUI);
@@ -541,6 +550,7 @@ namespace JellyWorldGame
             comboText=Label("Combo",gameUI,"",new Vector2(-176,354),new Vector2(610,44),28,Purple,TextAnchor.MiddleCenter,true);
             moveRule=Label("Goal foot",gameUI,"",new Vector2(521,-408),new Vector2(420,30),15,Ink,TextAnchor.MiddleCenter);
             BuildInfiniteUI(r);BuildGuardianUI(r);BuildRangeUI(r);BuildCampaignUI(r);
+            BuildRaceUI(r);
             modal=Rect("Dialog",r,Vector2.zero,new Vector2(1600,900));modal.gameObject.SetActive(false);
         }
         void ShowHelp()

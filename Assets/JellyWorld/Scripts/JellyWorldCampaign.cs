@@ -61,7 +61,7 @@ namespace JellyWorldGame
         {
             System.Array.Clear(collected,0,collected.Length);
             iceRehitAt=new float[BoardSize,BoardSize];
-            frost=new bool[BoardSize,BoardSize];frostVisuals=new GameObject[BoardSize,BoardSize];FrostRemaining=InfiniteMode?0:LevelSpec.Frost;
+            frost=new bool[BoardSize,BoardSize];frostVisuals=new GameObject[BoardSize,BoardSize];FrostRemaining=UnlimitedMoves?0:LevelSpec.Frost;
             var random=new System.Random(level*241+37);int count=0;
             while(count<FrostRemaining) {
                 int x=random.Next(BoardSize),y=random.Next(BoardSize);if(!IsPlayableCell(x,y) || frost[x,y])continue;
@@ -88,6 +88,7 @@ namespace JellyWorldGame
         }
         public bool ObjectivesMet {
             get {
+                if(RaceMode)return score>=RaceTarget;
                 if(InfiniteMode)return false;var c=LevelSpec;
                 return score>=c.Score && FrostRemaining==0 &&
                     (c.ColorA<0 || collected[c.ColorA]>=c.AmountA) &&
@@ -96,6 +97,7 @@ namespace JellyWorldGame
         }
         public string ObjectiveSummary()
         {
+            if(RaceMode)return "竞速目标 "+RaceTarget.ToString("N0")+" 分";
             if(InfiniteMode)return "选择道具";var c=LevelSpec;var parts=new System.Collections.Generic.List<string>();
             if(c.ColorA>=0)parts.Add(JellyLevels.ColorNames[c.ColorA]+" "+Mathf.Min(collected[c.ColorA],c.AmountA)+"/"+c.AmountA);
             if(c.ColorB>=0)parts.Add(JellyLevels.ColorNames[c.ColorB]+" "+Mathf.Min(collected[c.ColorB],c.AmountB)+"/"+c.AmountB);
@@ -105,6 +107,7 @@ namespace JellyWorldGame
         }
         float ObjectiveProgress()
         {
+            if(RaceMode)return Mathf.Clamp01((float)score/RaceTarget);
             var c=LevelSpec;float sum=Mathf.Clamp01((float)score/c.Score);int count=1;
             if(c.ColorA>=0){sum+=Mathf.Clamp01((float)collected[c.ColorA]/c.AmountA);count++;}
             if(c.ColorB>=0){sum+=Mathf.Clamp01((float)collected[c.ColorB]/c.AmountB);count++;}
@@ -114,7 +117,7 @@ namespace JellyWorldGame
         public bool StartLevel(int number)
         {
             if(number<1 || number>JellyLevels.All.Length || number>JellyProgress.Unlocked)return false;
-            SaveInfiniteBest();InfiniteMode=false;level=number;NewGame();return true;
+            SaveInfiniteBest();LeaveRace();InfiniteMode=false;level=number;NewGame();return true;
         }
         void FinishLevel(bool win)
         {
