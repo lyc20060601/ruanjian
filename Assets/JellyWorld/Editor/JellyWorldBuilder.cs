@@ -217,7 +217,17 @@ public static class JellyWorldBuilder
         for(int x=0;x<8;x++)for(int y=0;y<8;y++)cross.Cells[x,y]=(x+y)%5;
         for(int k=1;k<=3;k++){cross.Cells[k,2]=4;cross.Cells[2,k]=4;}
         if(cross.Matches().Count!=5)throw new Exception("Cross should count each cell once");
+        int previousSize=0,previousColors=0,previousScore=0;
         foreach(var level in JellyLevels.All) {
+            if(level.Id<1 || level.Id>JellyLevels.All.Length)throw new Exception("Invalid level id "+level.Id);
+            if(level.Size<8 || level.Size>12 || level.Size<previousSize)throw new Exception("Invalid map size progression at level "+level.Id);
+            if(level.Colors<4 || level.Colors>7 || level.Colors<previousColors)throw new Exception("Invalid color progression at level "+level.Id);
+            if(level.Moves<=0 || level.Score<=previousScore)throw new Exception("Invalid difficulty progression at level "+level.Id);
+            if(level.Frost<0 || level.Frost>level.CellCount)throw new Exception("Invalid frost target at level "+level.Id);
+            if(string.IsNullOrWhiteSpace(level.MapName))throw new Exception("Missing map name at level "+level.Id);
+            if(level.ColorA>=level.Colors || level.ColorB>=level.Colors || level.AmountA<0 || level.AmountB<0)
+                throw new Exception("Invalid collection target at level "+level.Id);
+            previousSize=level.Size;previousColors=level.Colors;previousScore=level.Score;
             var mask=level.CreateMask();var seen=new bool[level.Size,level.Size];var queue=new Queue<Vector2Int>();
             for(int y=0;y<level.Size && queue.Count==0;y++)for(int x=0;x<level.Size;x++)if(mask[x,y]){queue.Enqueue(new Vector2Int(x,y));seen[x,y]=true;break;}
             int connected=0;Vector2Int[] directions={Vector2Int.right,Vector2Int.left,Vector2Int.up,Vector2Int.down};
