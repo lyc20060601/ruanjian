@@ -150,6 +150,13 @@ public static class JellyExperienceBatch
         }
         Check(playButton.GetComponent<Image>().material.shader.name=="Jelly World/Soft Button","rounded lighting shader assigned");
         yield return Capture("08-first-level");yield return Capture("08-first-level-1280",1280,720);
+        world.Hint();
+        var hinted=world.tiles.Cast<JellyTile>().Where(t=>t!=null && t.hintMark!=null).ToList();
+        Check(hinted.Count==2 && hinted.All(t=>t.hinted && t.hintMark.GetComponentsInChildren<MeshRenderer>().Length==8),
+            "manual hint frames both exchangeable jellies with contrast and bright edges");
+        yield return Capture("12-visible-hint");yield return Capture("12-visible-hint-1280",1280,720);
+        world.ClickCell(new Vector2Int(hinted[0].x,hinted[0].y));
+        Check(hinted.All(t=>t.hintMark==null && !t.hinted),"board input clears hint outlines");
         // Button faces catch UI rays; unpainted layout padding does not.
         var toolCard=GameObject.Find("Tool card 0").GetComponent<RectTransform>();
         var rayPointer=new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current);

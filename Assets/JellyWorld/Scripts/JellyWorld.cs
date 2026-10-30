@@ -295,12 +295,48 @@ namespace JellyWorldGame
             if(Inside(selected) && tiles[selected.x,selected.y]!=null) tiles[selected.x,selected.y].selected=false;
             selected=new Vector2Int(-1,-1);
         }
-        void ClearHints() { foreach(var t in tiles) if(t!=null) t.hinted=false; }
+        void ClearHints()
+        {
+            foreach(var tile in tiles)if(tile!=null) {
+                tile.hinted=false;
+                if(tile.hintMark!=null) {
+                    tile.hintMark.gameObject.SetActive(false);
+                    Destroy(tile.hintMark.gameObject);
+                    tile.hintMark=null;
+                }
+            }
+        }
+        void MarkHint(JellyTile tile,Material accent)
+        {
+            var mark=Group("Hint marker",tile.transform);
+            mark.localPosition=new Vector3(0,0,-.65f);
+            tile.hintMark=mark;
+            foreach(bool backing in new[]{true,false}) {
+                float offset=backing?.53f:.52f;
+                float width=backing?.19f:.11f;
+                var material=backing?plum:accent;
+                for(int side=-1;side<=1;side+=2) {
+                    Shape("Hint horizontal edge",mark,new Vector3(0,side*offset,backing?.04f:0),
+                        new Vector3(1.18f,width,.08f),material);
+                    Shape("Hint vertical edge",mark,new Vector3(side*offset,0,backing?.04f:0),
+                        new Vector3(width,1.18f,.08f),material);
+                }
+            }
+            tile.Pulse(.2f);
+        }
         public void Hint(bool announce=true)
         {
             if(busy || mode!="play" || paused || ChoosingLanding) return;
             ClearHints();Vector2Int a,b;
-            if(board.FindMove(out a,out b)) {tiles[a.x,a.y].hinted=true;tiles[b.x,b.y].hinted=true;if(announce) Notice("交换跳动的两格");}
+            if(board.FindMove(out a,out b)) {
+                var first=tiles[a.x,a.y];var second=tiles[b.x,b.y];
+                first.hinted=second.hinted=true;
+                if(announce) {
+                    MarkHint(first,candy[1]);
+                    MarkHint(second,candy[3]);
+                    Notice("交换发光边框标出的两格");
+                }
+            }
         }
         void SwapVisual(Vector2Int a,Vector2Int b)
         {
@@ -322,8 +358,17 @@ namespace JellyWorldGame
         }
         public IEnumerator Resolve(HashSet<Vector2Int> matches,bool usedMove,Vector2Int? preferred=null)
         {
-            busy=true;int chain=0;bool natural=usedMove;UpdateHUD();
-            while(matches.Count>0) {
+            busy=true;int chain=0;bool natural=usedMove,finishing=false;UpdateHUD();
+            while(true) {
+                if(matches.Count==0) {
+                    if(!InfiniteMode && (ObjectivesMet || moves<=0)) {
+                        finishing=true;
+                        matches=RemainingSpecials();
+                    }
+                    if(matches.Count==0)break;
+                    natural=false;
+                    Notice("结算剩余特效果冻");
+                }
                 chain++;
                 var creation=natural?JellySpecialRules.FindCreation(board,matches,preferred??new Vector2Int(-1,-1)):
                     new JellySpecialCreation(new Vector2Int(-1,-1),JellySpecial.None);
@@ -360,13 +405,21 @@ namespace JellyWorldGame
                 CollapseBoard();
                 yield return WaitForRefillFalls();
                 yield return new WaitForSeconds(.06f);
-                matches=board.Matches();natural=true;preferred=null;
+                matches=board.Matches();natural=!finishing;preferred=null;
             }
             comboText.text="";busy=false;idle=0;UpdateHUD();
             if(!InfiniteMode && (ObjectivesMet || moves<=0)) { Finish(ObjectivesMet);yield break; }
             Vector2Int ma,mb;
             if(!board.FindMove(out ma,out mb)) {Notice("无可用组合，自动洗牌");Shuffle(false);}
             else Notice("");
+        }
+        HashSet<Vector2Int> RemainingSpecials()
+        {
+            var cells=new HashSet<Vector2Int>();
+            for(int x=0;x<BoardSize;x++)for(int y=0;y<BoardSize;y++)
+                if(board.Contains(new Vector2Int(x,y)) && tiles[x,y]!=null && tiles[x,y].special!=JellySpecial.None)
+                    cells.Add(new Vector2Int(x,y));
+            return cells;
         }
         void ClearEffects()
         {

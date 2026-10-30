@@ -97,6 +97,15 @@ public static class JellyCampaignVerification
             w.StartChallenge();w.moves=0;
             yield return w.Resolve(new HashSet<Vector2Int>(),false);
             Check(w.mode=="result","loss at zero moves");
+            w.NewGame();yield return null;
+            var leftover=LastPlayable(w.board);
+            w.tiles[leftover.x,leftover.y].special=JellySpecial.Rainbow;
+            int clearedColor=w.tiles[leftover.x,leftover.y].color;
+            w.moves=0;w.score=0;
+            yield return w.Resolve(new HashSet<Vector2Int>(),false);
+            Check(w.mode=="result" && w.score>=w.PlayableCellCount*60,"remaining special and any refill cascades score before result");
+            Check(w.collected[clearedColor]>0 && w.tiles[leftover.x,leftover.y]!=null && w.tiles[leftover.x,leftover.y].special==JellySpecial.None,
+                "end-of-round special is consumed and refill finishes before result");
             w.NewGame();w.score=JellyLevels.Get(1).Score;
             JellyProgress.PlayerName="Campaign QA";yield return w.Resolve(new HashSet<Vector2Int>(),false);
             Check(w.mode=="result" && JellyProgress.Stars(1)>0 && JellyProgress.Unlocked>=2,"win saves stars and unlocks next level");

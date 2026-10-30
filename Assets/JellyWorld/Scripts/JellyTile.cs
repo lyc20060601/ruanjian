@@ -6,6 +6,7 @@ namespace JellyWorldGame
         public int x,y,color;
         public JellySpecial special;
         public Transform specialMark;
+        public Transform hintMark;
         public bool selected, hinted, hovered, pressed;
         float interactionScale;
         public Vector2 pointerLean;
@@ -57,6 +58,7 @@ namespace JellyWorldGame
             var tilt=Quaternion.Euler(pressed?-pointerLean.y*5:0,pressed?pointerLean.x*5:0,selected?Mathf.Sin(Time.time*4)*1.3f:0);
             transform.localRotation=Quaternion.Slerp(transform.localRotation,tilt,1-Mathf.Exp(-22*Time.deltaTime));
             if(specialMark!=null)specialMark.localScale=Vector3.one*(1+.08f*Mathf.Sin(Time.time*5+color));
+            if(hintMark!=null)hintMark.localScale=Vector3.one*(1.04f+.10f*Mathf.Sin(Time.time*7));
         }
     }
 }
