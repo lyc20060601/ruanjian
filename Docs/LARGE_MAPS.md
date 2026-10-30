@@ -39,3 +39,22 @@
 | 12 | 7 | 42 | 8000 | 冰层 48、蓝色 50 |
 
 尺寸、颜色数和目标随章节提升。调整数值时应同时考虑有效格数、道具解锁阶段和特殊果冻带来的范围收益，避免只提高单一目标造成卡关。
+
+## 修改后的验证步骤
+
+在 Unity 中执行 **Jelly World > Verify board rules**。该检查会验证：
+
+- 12 张地图的尺寸、颜色和目标按关卡合理递增。
+- 地图有效格全部连通，缺口保持为阻塞格。
+- 每关 30 个确定性随机开局没有现成匹配，并且至少存在一次合法交换。
+- 冰层数量不超过有效格数，颜色目标引用当前关卡已有的颜色。
+
+也可以在仓库根目录运行：
+
+```powershell
+& "D:\Unity\Editors\6000.3.24f1\Editor\Unity.exe" `
+  -batchmode -nographics -quit -projectPath "$PWD" `
+  -executeMethod JellyWorldBuilder.Verify -logFile "Logs/large-maps.log"
+```
+
+成功日志包含 `JELLY RULES PASS`。涉及道具、特殊果冻或场景往返的修改还应运行 `JellyExperienceBatch.Run` 完整回归。
