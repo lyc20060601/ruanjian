@@ -51,7 +51,11 @@ namespace JellyWorldGame
         public static string FormatTime(double seconds,bool precise=false)
         {
             if(double.IsNaN(seconds) || double.IsInfinity(seconds) || seconds<0)seconds=0;
-            long milliseconds=(long)Math.Floor(Math.Min(seconds,2147483)*1000);
+            long milliseconds=(long)(precise?Math.Ceiling(Math.Min(seconds,2147483)*1000):Math.Floor(Math.Min(seconds,2147483)*1000));
+            return FormatMilliseconds(milliseconds,precise);
+        }
+        static string FormatMilliseconds(long milliseconds,bool precise)
+        {
             return (milliseconds/60000).ToString("00",CultureInfo.InvariantCulture)+":"+
                 (milliseconds/1000%60).ToString("00",CultureInfo.InvariantCulture)+"."+
                 (precise?(milliseconds%1000).ToString("000",CultureInfo.InvariantCulture):(milliseconds/100%10).ToString(CultureInfo.InvariantCulture));
@@ -59,7 +63,7 @@ namespace JellyWorldGame
         public static string BestLabel(int target)
         {
             int best=BestMilliseconds(target);
-            return best>0?FormatTime(best/1000d,true):"等待你的首个纪录";
+            return best>0?FormatMilliseconds(best,true):"等待你的首个纪录";
         }
     }
 }

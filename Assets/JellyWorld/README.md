@@ -24,6 +24,10 @@
 
 ## 表现与交互
 
+首页使用暖白、莓紫与薄荷配色，分开呈现关卡旅程、自由乐园和计时竞速入口；进度、下一项解锁与快捷设置保留。游戏信息栏突出当前得分、目标与步数／用时。页面淡入在简洁特效模式下直接跳过；全部美术复用已有场景、字体和圆角资源。
+
+计时竞速有 3000、6000、10000 分三个目标，使用 8×8 五色棋盘，不限步数且不使用道具。计时在首次达标时冻结，各档独立保存毫秒精度的本机最佳；暂停、设置与切出窗口不计时。竞速纪录不改变原关卡和排行榜。完整规则与验证菜单见 `Docs/RACE_MODE.md`。
+
 首页、顶部信息、目标和道具区域采用纯布局节点，避免嵌套浅色外框；目标数量决定道具区位置。主要按钮使用现有圆角 Sprite、曲面受光 Shader、浅侧边与接触阴影。面板撤除后，独立按钮仍保留 UI 点击拦截，空白区域不拦截。
 
 支持悬停、按压、连续拖动和补位预输入；暂停、离开与隐藏控件会清理输入/视觉状态。碎片数量限制在预算内，可保存简洁特效设置。临时忙碌状态只阻止输入，不让整排按钮反复变平。
@@ -37,6 +41,8 @@
 | 棋盘规则、地图和关卡数值 | `Scripts/JellyBoard.cs`、`JellyLevels.cs` |
 | 成长与解锁条件 | `Scripts/JellyJourney.cs` |
 | 主流程与输入 | `Scripts/JellyWorld.cs`、`JellyWorldInput.cs`、`JellyTile.cs` |
+| 竞速计时、目标、纪录与页面 | `Scripts/JellyRace.cs`、`JellyWorldRace.cs` |
+| 页面过渡 | `Scripts/JellyUIReveal.cs` |
 | 首页/章节/目标/光照 | `Scripts/JellyWorldExperience.cs` |
 | 立体预览与按钮表面 | `Scripts/JellyMapPreview.cs`、`JellyUISurface.cs`、`JellyButtonFeedback.cs`、`Resources/SoftButton.shader` |
 | 道具、守护者与靶场 | `Scripts/JellyWorldToolActions.cs`、`JellyGolemMode.cs`、`JellySugarRange.cs` 及对应 partial 文件 |

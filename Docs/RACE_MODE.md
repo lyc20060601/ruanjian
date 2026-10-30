@@ -6,6 +6,10 @@
 
 结果页支持再次挑战、切换目标和返回主页。三个目标分别保存最快用时，精度为毫秒；未完成的比赛不保存。竞速纪录使用独立的 `JellyWorld.Race.BestMilliseconds.*` PlayerPrefs 键，不改变关卡解锁、星星和原排行榜。重开需要确认，会从零计时。
 
+![竞速目标选择](images/race-ui-20261030/race-lobby.png)
+
+![竞速实际运行](images/race-ui-20261030/race-playing.png)
+
 ## 开发与验收
 
 - 计时、目标与纪录：`Assets/JellyWorld/Scripts/JellyRace.cs`。

@@ -58,6 +58,7 @@ namespace JellyWorldGame
                 "目标 "+RaceTarget.ToString("N0")+" 分 · 本次 "+score.ToString("N0")+" 分\n"+
                 "本机最快  "+JellyRace.BestLabel(RaceTarget)+"\n每一次连锁，都让终点更近一点。",
                 "再跑一次  →",()=>StartRace(RaceTarget),true,ShowRaceLobby,"切换目标",ShowMenu,"返回主页");
+            var timeLabel=modal.Find("Dialog card/Dialog subtitle").GetComponent<Text>();timeLabel.fontSize=48;timeLabel.fontStyle=FontStyle.Bold;
         }
         public void ShowRaceLobby()
         {
@@ -69,6 +70,7 @@ namespace JellyWorldGame
         void BuildRaceUI(Transform root)
         {
             raceUI=Rect("Race lobby",root,Vector2.zero,new Vector2(1600,900));
+            raceUI.gameObject.AddComponent<JellyUIReveal>();
             var backdrop=Panel("Race backdrop",raceUI,Vector2.zero,new Vector2(6000,4000),Porcelain);backdrop.raycastTarget=false;
             Label("Race eyebrow",raceUI,"JELLY WORLD  /  SPRINT CLUB",new Vector2(-440,368),new Vector2(620,38),20,Purple,TextAnchor.MiddleLeft,true);
             Label("Race title",raceUI,"让每一次消除，都快一点。",new Vector2(-160,267),new Vector2(1180,90),49,Ink,TextAnchor.MiddleLeft,true);
@@ -118,13 +120,13 @@ namespace JellyWorldGame
             if(moveCaption!=null)moveCaption.text=RaceMode?"用时":"步数";
             if(!RaceMode)return;
             raceTimer.text=JellyRace.FormatTime(RaceSeconds);
-            moveText.text=JellyRace.FormatTime(RaceSeconds);moveText.fontSize=RaceMode?22:30;
+            moveText.text=JellyRace.FormatTime(RaceSeconds);moveText.fontSize=26;
             raceGoal.text=RaceTarget.ToString("N0")+" 分的终点";
             raceProgress.fillAmount=Mathf.Clamp01((float)score/RaceTarget);
             raceRemaining.text=score>=RaceTarget?"目标达成！":"距离终点还差 "+Mathf.Max(0,RaceTarget-score).ToString("N0")+" 分";
             raceBest.text="个人最佳\n"+JellyRace.BestLabel(RaceTarget);
             int best=JellyRace.BestMilliseconds(RaceTarget);
-            raceRecordNote.text=best==0?"完成首场，点亮你的纪录。":RaceSeconds*1000<best?"保持节奏，向个人最佳进发。":"超过最佳用时，完成也是进步。";
+            raceRecordNote.text=RaceCompleted?"本次达标，用时已锁定。":best==0?"完成首场，点亮你的纪录。":RaceSeconds*1000<best?"保持节奏，向个人最佳进发。":"超过最佳用时，完成也是进步。";
         }
     }
 }

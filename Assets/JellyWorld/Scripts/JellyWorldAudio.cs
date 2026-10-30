@@ -50,11 +50,11 @@ namespace JellyWorldGame
         public void OpenAudioSettings()
         {
             bool resume=mode=="play" || mode=="golem" || mode=="range";
-            if(resume){paused=true;ResetBoardGesture();Time.timeScale=0;if(Guardian!=null)Guardian.SyncCursor();if(Range!=null)Range.SyncCursor();}
+            if(resume){paused=true;SyncRacePause();ResetBoardGesture();Time.timeScale=0;if(Guardian!=null)Guardian.SyncCursor();if(Range!=null)Range.SyncCursor();}
             ClearUIChildren(modal);modal.gameObject.SetActive(true);
             Panel("Audio veil",modal,Vector2.zero,new Vector2(6000,4000),new Color(.12f,.16f,.24f,.48f));
-            var card=Card("Audio settings card",modal,Vector2.zero,new Vector2(650,560),new Color(.98f,.99f,1)).transform;
-            Label("Audio heading",card,"舒适设置",new Vector2(0,222),new Vector2(558,50),34,Ink);
+            var card=Card("Audio settings card",modal,Vector2.zero,new Vector2(650,560),Porcelain).transform;
+            Label("Audio heading",card,"舒适设置",new Vector2(0,222),new Vector2(558,50),34,Ink,TextAnchor.MiddleCenter,true);
             AddVolumeSlider(card,"界面音量",112,uiVolume,value=>{uiVolume=value;StoreAudioVolumes();});
             AddVolumeSlider(card,"游戏音量",30,gameVolume,value=>{gameVolume=value;StoreAudioVolumes();});
             var effects=Button("Reduced effects",card,ReducedEffects?"简洁特效：开":"简洁特效：关",new Vector2(0,-65),new Vector2(540,50),new Color(.90f,.86f,1),Ink,()=>{},21);
@@ -68,7 +68,7 @@ namespace JellyWorldGame
             audioToggleLabel=toggle.GetComponentInChildren<Text>();
             Button("Preview audio",card,"试听碎冰",new Vector2(146,-157),new Vector2(248,50),new Color(.85f,.90f,.99f),Ink,()=>PlaySound(JellySound.IceBreak,.8f),21);
             Button("Close audio settings",card,resume?"返回游戏":"返回",new Vector2(0,-230),new Vector2(280,46),Purple,Color.white,()=>{
-                modal.gameObject.SetActive(false);if(resume){paused=false;Time.timeScale=1;if(Guardian!=null)Guardian.SyncCursor();if(Range!=null)Range.SyncCursor();}
+                modal.gameObject.SetActive(false);if(resume){paused=false;SyncRacePause();Time.timeScale=1;if(Guardian!=null)Guardian.SyncCursor();if(Range!=null)Range.SyncCursor();}
             },21);
         }
         void AddVolumeSlider(Transform card,string title,float y,float initial,System.Action<float> changed)
@@ -79,7 +79,7 @@ namespace JellyWorldGame
             var slider=rt.gameObject.AddComponent<Slider>();slider.minValue=0;slider.maxValue=1;
             var track=Panel("Slider track",rt,Vector2.zero,new Vector2(540,10),new Color(.82f,.86f,.91f));
             var fillArea=Rect("Slider fill area",rt,Vector2.zero,new Vector2(540,10));
-            var fill=Panel("Slider fill",fillArea,Vector2.zero,Vector2.zero,new Color(.32f,.72f,.97f));
+            var fill=Panel("Slider fill",fillArea,Vector2.zero,Vector2.zero,Accent);
             var handleArea=Rect("Slider handle area",rt,Vector2.zero,new Vector2(516,24));
             var handle=Panel("Slider handle",handleArea,Vector2.zero,new Vector2(24,0),Purple);
             slider.fillRect=fill.rectTransform;slider.handleRect=handle.rectTransform;slider.targetGraphic=handle;

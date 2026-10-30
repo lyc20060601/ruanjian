@@ -54,6 +54,7 @@ public static class JellyRaceVerification
             foreach(int target in JellyRace.Targets)PlayerPrefs.DeleteKey(JellyRace.BestKey(target));
             Check(JellyRace.Record(3000,20) && !JellyRace.Record(3000,30),"only a faster completed time replaces the personal best");
             Check(JellyRace.Record(3000,10.2341) && JellyRace.BestMilliseconds(3000)==10235,"saved times round upward to avoid inventing a faster result");
+            Check(JellyRace.FormatTime(10.2341,true)==JellyRace.BestLabel(3000),"result display matches the exact saved millisecond record");
             Check(JellyRace.Record(6000,25) && JellyRace.BestMilliseconds(10000)==0 && JellyRace.BestMilliseconds(3000)==10235,"targets keep independent records");
             Check(!JellyRace.Record(3000,0) && !JellyRace.Record(3000,-1) && !JellyRace.Record(3000,double.NaN) && !JellyRace.Record(3000,double.PositiveInfinity) && !JellyRace.Record(123,1),"invalid results are rejected");
         } finally {
@@ -143,17 +144,22 @@ public static class JellyRaceVerification
         yield return Capture("04-race-paused");
         world.TogglePause();yield return new WaitForSecondsRealtime(.2f);
         Check(world.RaceSeconds>stopped+.1,"live resume continues timing");
+        world.OpenAudioSettings();stopped=world.RaceSeconds;yield return new WaitForSecondsRealtime(.2f);
+        Check(Math.Abs(world.RaceSeconds-stopped)<.01,"settings pause excludes waiting time");
+        GameObject.Find("Close audio settings").GetComponent<Button>().onClick.Invoke();yield return null;
+        Check(!world.IsPaused,"closing settings resumes the race");
         bool invalid=false;
         for(int x=0;x<7 && !invalid;x++)for(int y=0;y<8 && !invalid;y++) {
             var a=new Vector2Int(x,y);var b=new Vector2Int(x+1,y);
             world.board.Swap(a,b);bool valid=world.board.Matches().Count>0;world.board.Swap(a,b);
             if(!valid){int before=world.score;yield return world.SwapRoutine(a,b);Check(world.score==before && world.moves==moves,"invalid swaps revert without score or move changes");invalid=true;}
         }
+        yield return Capture("03-race-playing");yield return Capture("03-race-playing-1280",1280,720);yield return Capture("03-race-playing-4x3",1024,768);
         for(int attempt=0;attempt<80 && world.mode=="play";attempt++) {
             if(world.IsPaused)world.TogglePause();
             Vector2Int a,b;Check(world.board.FindMove(out a,out b),"race board retains a valid move");
             yield return world.SwapRoutine(a,b);
-            if(attempt==1){yield return Capture("03-race-playing");yield return Capture("03-race-playing-1280",1280,720);yield return Capture("03-race-playing-4x3",1024,768);}
+            if(attempt==1 && world.mode=="play"){yield return Capture("03-race-playing");yield return Capture("03-race-playing-1280",1280,720);yield return Capture("03-race-playing-4x3",1024,768);}
         }
         Check(world.mode=="result" && world.RaceCompleted && world.score>=3000,"real matching and cascades finish the race at its target");
         Check(world.moves==moves,"valid race swaps do not consume moves");
@@ -174,6 +180,7 @@ public static class JellyRaceVerification
     }
     static IEnumerator Capture(string name,int width=1600,int height=900)
     {
+        yield return new WaitForSecondsRealtime(.25f);
         var camera=Camera.main;var canvas=world.GetComponentInChildren<Canvas>();
         var mode=canvas.renderMode;var oldCamera=canvas.worldCamera;float oldDistance=canvas.planeDistance;
         var target=camera.targetTexture;float aspect=camera.aspect;var active=RenderTexture.active;

@@ -20,8 +20,8 @@ namespace JellyWorldGame
         public bool IsToolUnlocked(int index){return !RaceMode && JellyJourney.CanUseTool(index,JellyProgress.Unlocked,InfiniteMode);}
         public void SetReducedEffects(bool value)
         {ReducedEffects=value;PlayerPrefs.SetInt("JellyWorld.Comfort.ReducedEffects",value?1:0);PlayerPrefs.Save();}
-        Color Accent {get{return new Color(.25f,.73f,.96f);}}
-        Color Porcelain {get{return new Color(1,.987f,.966f);}}
+        Color Accent {get{return new Color(.40f,.68f,.73f);}}
+        Color Porcelain {get{return new Color(1,.981f,.959f);}}
         Image Card(string name,Transform parent,Vector2 position,Vector2 size,Color color)
         {
             var image=Panel(name,parent,position,size,color);
@@ -63,22 +63,30 @@ namespace JellyWorldGame
         void OnDestroy(){ReleaseMapPreviews();if(uiButtonMaterial!=null)Destroy(uiButtonMaterial);foreach(var material in comfortMaterials)if(material!=null)Destroy(material);}
         void BuildExperienceHome()
         {
-            Label("Home wordmark",menuUI,"JELLY WORLD  /  果冻漫游",new Vector2(-455,365),new Vector2(590,40),23,Ink,TextAnchor.MiddleLeft,true);
-            Label("Home title",menuUI,"在糖果世界\n慢慢发现惊喜",new Vector2(-455,220),new Vector2(590,166),53,Ink,TextAnchor.MiddleLeft,true);
-            Label("Home introduction",menuUI,"交换 · 消除 · 探索",new Vector2(-455,103),new Vector2(590,36),21,new Color(.23f,.39f,.64f));
-            var card=Rect("Journey home card",menuUI,new Vector2(-455,-104),new Vector2(590,342));
-            bestText=Label("Best",card,"",new Vector2(0,125),new Vector2(514,38),22,Ink);
-            var play=Button("Continue journey",card,"开始旅程",new Vector2(0,55),new Vector2(514,68),Accent,Ink,ContinueJourney,26,emphasized:true);
+            Label("Home wordmark",menuUI,"JELLY WORLD",new Vector2(-450,367),new Vector2(600,40),24,Ink,TextAnchor.MiddleLeft,true);
+            Label("Home brand note",menuUI,"果冻漫游  /  好心情制造所",new Vector2(-450,332),new Vector2(600,28),15,new Color(.49f,.45f,.59f));
+            var badge=Panel("Home sweet badge",menuUI,new Vector2(-626,268),new Vector2(248,34),new Color(.91f,.86f,.98f));badge.raycastTarget=false;
+            Label("Home sweet badge text",badge.transform,"一口甜 · 一场小冒险",Vector2.zero,new Vector2(228,30),15,Purple,TextAnchor.MiddleCenter);
+            Label("Home title",menuUI,"把好心情，\n消除成满分。",new Vector2(-438,159),new Vector2(624,170),62,Ink,TextAnchor.MiddleLeft,true);
+            Label("Home introduction",menuUI,"交换果冻，收集星星。或者，和时间赛一场。",new Vector2(-438,43),new Vector2(624,36),20,new Color(.47f,.43f,.57f));
+            var card=Rect("Journey home card",menuUI,new Vector2(-438,-117),new Vector2(624,260));
+            bestText=Label("Best",card,"",new Vector2(0,97),new Vector2(624,32),18,Purple);
+            var play=Button("Continue journey",card,"开始旅程",new Vector2(0,34),new Vector2(624,68),Purple,Color.white,ContinueJourney,25,emphasized:true);
             continueLabel=play.GetComponentInChildren<Text>();
-            Button("Start adventure",card,"关卡地图",new Vector2(-133,-23),new Vector2(248,57),new Color(1,.84f,.70f),Ink,ShowLevelSelect,22);
-            Button("Infinite mode entry",card,"自由乐园",new Vector2(133,-23),new Vector2(248,57),new Color(.88f,.81f,1),Ink,ShowInfinitePage,22);
-            homeGrowth=Label("Home growth",card,"",new Vector2(0,-91),new Vector2(514,32),18,new Color(.23f,.39f,.64f));
-            homeUnlock=Label("Home next unlock",card,"",new Vector2(0,-131),new Vector2(514,30),17,new Color(.36f,.40f,.54f));
-            Button("How to play",menuUI,"玩法说明",new Vector2(-651,-331),new Vector2(192,49),Porcelain,Ink,ShowHelp,19);
-            Button("Sound",menuUI,"舒适设置",new Vector2(-449,-331),new Vector2(192,49),Porcelain,Ink,OpenAudioSettings,19);
-            Button("Leaderboard",menuUI,"排行榜",new Vector2(-247,-331),new Vector2(192,49),Porcelain,Ink,ShowLeaderboard,19);
-            Button("Race mode entry",menuUI,"计时竞速  →",new Vector2(366,-286),new Vector2(390,64),Purple,Color.white,ShowRaceLobby,25,emphasized:true);
-            Label("Home sandbox note",menuUI,"自由乐园 · 全道具开放，无步数限制",new Vector2(366,-350),new Vector2(590,38),18,Ink,TextAnchor.MiddleCenter);
+            Button("Start adventure",card,"关卡地图  ↗",new Vector2(-161,-49),new Vector2(302,60),new Color(1,.87f,.78f),Ink,ShowLevelSelect,21);
+            Button("Infinite mode entry",card,"自由乐园  ↗",new Vector2(161,-49),new Vector2(302,60),new Color(.82f,.93f,.90f),Ink,ShowInfinitePage,21);
+            homeGrowth=Label("Home growth",card,"",new Vector2(0,-108),new Vector2(624,31),17,new Color(.43f,.40f,.55f));
+            homeUnlock=Label("Home next unlock",card,"",new Vector2(0,-146),new Vector2(624,28),16,new Color(.53f,.48f,.60f));
+            Button("How to play",menuUI,"玩法说明",new Vector2(-649,-340),new Vector2(202,46),Color.white,Ink,ShowHelp,18);
+            Button("Sound",menuUI,"舒适设置",new Vector2(-438,-340),new Vector2(202,46),Color.white,Ink,OpenAudioSettings,18);
+            Button("Leaderboard",menuUI,"排行榜",new Vector2(-227,-340),new Vector2(202,46),Color.white,Ink,ShowLeaderboard,18);
+            var sprint=Card("Home sprint invitation",menuUI,new Vector2(370,-316),new Vector2(616,134),new Color(.96f,.92f,.99f));sprint.raycastTarget=false;
+            Label("Home sprint eyebrow",sprint.transform,"THE SPRINT CLUB",new Vector2(-131,37),new Vector2(292,22),12,Purple,TextAnchor.MiddleLeft,true);
+            Label("Home sprint title",sprint.transform,"计时竞速",new Vector2(-131,2),new Vector2(292,40),27,Ink,TextAnchor.MiddleLeft,true);
+            Label("Home sprint description",sprint.transform,"更少时间，抵达新的终点。",new Vector2(-131,-34),new Vector2(292,28),16,new Color(.44f,.39f,.56f));
+            Button("Race mode entry",sprint.transform,"挑战自己  →",new Vector2(166,0),new Vector2(224,60),RaceAccent,Color.white,ShowRaceLobby,22,emphasized:true);
+            Label("Home hero caption",menuUI,"MEET YOUR SWEET LITTLE FRIENDS",new Vector2(373,310),new Vector2(610,30),13,Purple,TextAnchor.MiddleCenter,true);
+            Label("Home sandbox note",menuUI,"12 场关卡冒险  /  无尽探索  /  3 档计时挑战",new Vector2(370,-410),new Vector2(650,27),14,Ink,TextAnchor.MiddleCenter);
             Button("Quit game",menuUI,"退出",new Vector2(676,366),new Vector2(130,46),Porcelain,Ink,()=>Application.Quit(),19);
         }
         void ContinueJourney(){StartLevel(JellyProgress.Unlocked);}
@@ -94,6 +102,7 @@ namespace JellyWorldGame
         void BuildJourneyUI(Transform parent)
         {
             levelsUI=Rect("Level selection",parent,Vector2.zero,new Vector2(1600,900));
+            levelsUI.gameObject.AddComponent<JellyUIReveal>();
             Panel("Level backdrop",levelsUI,Vector2.zero,new Vector2(6000,4000),new Color(1,.965f,.925f));
             Label("Journey brand",levelsUI,"JELLY WORLD  /  旅程",new Vector2(-530,393),new Vector2(440,34),20,new Color(.23f,.39f,.64f),TextAnchor.MiddleLeft,true);
             chapterTitle=Label("Level title",levelsUI,"",new Vector2(-470,318),new Vector2(560,76),46,Ink,TextAnchor.MiddleLeft,true);
@@ -148,7 +157,7 @@ namespace JellyWorldGame
         void BuildObjectivePanel(Transform parent)
         {
             var card=Rect("Objectives card",parent,new Vector2(603,250),new Vector2(302,250));
-            Label("Objectives heading",card,"本关目标",new Vector2(0,91),new Vector2(254,38),23,Ink,TextAnchor.MiddleLeft,true);
+            Label("Objectives heading",card,"JOURNEY / 本关目标",new Vector2(0,91),new Vector2(254,38),18,Purple,TextAnchor.MiddleLeft,true);
             for(int i=0;i<4;i++) {
                 var row=Rect("Objective row "+i,card,new Vector2(0,44-i*44),new Vector2(254,42));objectiveRows[i]=row.gameObject;
                 objectiveValues[i]=Label("Objective value "+i,row,"",new Vector2(0,6),new Vector2(254,28),18,Ink);
