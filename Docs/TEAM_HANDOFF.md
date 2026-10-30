@@ -40,6 +40,14 @@ Windows：退出 Play Mode，执行 `Jelly World > Build Windows playtest`，输
 
 上述目录都在 `Assets/JellyWorld` 内，运行时代码在 `Scripts` 内。12 关地图模板定义在 `JellyLevels.cs` 的 `MapRows` 中：`#` 表示有效格，`.` 表示缺口；当前尺寸为 8×8～12×12。
 
+### 大地图接手注意事项
+
+- 修改 `MapRows` 时，每行长度和行数必须与关卡 `Size` 一致。
+- 新轮廓应保持四方向连通，并保留足够的连续三格区域供匹配生成。
+- 同步复核步数、目标分数、冰层数量、颜色收集数量和章节道具解锁阶段。
+- 镜头会按 `BoardSize` 自动取景；超过当前 12×12 上限时，需要同时检查顶部信息和右侧道具区遮挡。
+- 提交前执行 [大地图验证流程](LARGE_MAPS.md#修改后的验证步骤) 和完整 Play Mode 回归。
+
 ## Git 协作
 
 ```bash
