@@ -148,6 +148,9 @@ namespace JellyWorldGame
             playerInput=input.gameObject.AddComponent<InputField>();playerInput.characterLimit=12;
             var inputText=Label("Player input text",input.transform,"",Vector2.zero,new Vector2(269,40),21,Ink);
             playerInput.textComponent=inputText;playerInput.text=JellyProgress.PlayerName;
+            playerInput.targetGraphic=input;playerInput.selectionColor=new Color(.77f,.84f,1,.65f);
+            playerInput.placeholder=Label("Player name placeholder",input.transform,"输入昵称（最多12字）",Vector2.zero,new Vector2(269,40),17,MutedText);
+            input.gameObject.AddComponent<JellyUISurface>().style=JellyUISurface.SurfaceStyle.Panel;
             playerInput.onEndEdit.AddListener(value=>{JellyProgress.PlayerName=value;playerInput.text=JellyProgress.PlayerName;RenderRanks();});
             Label("Name label",ranksUI,"昵称",new Vector2(189,313),new Vector2(75,42),20,Ink);
             rankContent=Rect("Rank rows",ranksUI,Vector2.zero,new Vector2(1500,620));ranksUI.gameObject.SetActive(false);
@@ -179,7 +182,10 @@ namespace JellyWorldGame
             Label("Rank stars heading",rankContent,"星星",new Vector2(350,204),new Vector2(160,24),14,MutedText,TextAnchor.MiddleCenter);
             Label("Rank date heading",rankContent,"日期",new Vector2(544,204),new Vector2(213,24),14,MutedText,TextAnchor.MiddleRight);
             var rows=JellyProgress.Ranking(rankLevel);
-            if(rows.Count==0)Label("Rank empty",rankContent,"暂无记录",new Vector2(0,55),new Vector2(650,55),29,Purple,TextAnchor.MiddleCenter);
+            if(rows.Count==0) {
+                Label("Rank empty",rankContent,rankLevel==0?"暂无自由乐园成绩":"暂无通关记录",new Vector2(0,62),new Vector2(650,55),29,Purple,TextAnchor.MiddleCenter);
+                Label("Rank empty guidance",rankContent,rankLevel==0?"获得分数后返回主页，即可保存自由乐园成绩。":"完成本关后，这里会保留得分最高的 6 次成绩。",new Vector2(0,-3),new Vector2(1200,55),21,MutedText,TextAnchor.MiddleCenter);
+            }
             for(int i=0;i<rows.Count;i++) {
                 var r=rows[i];var line=Panel("Rank "+i,rankContent,new Vector2(0,168-i*52),new Vector2(1350,45),i%2==0?Color.white:new Color(.88f,.93f,.95f)).transform;
                 Label("Rank number",line,(i+1).ToString("00"),new Vector2(-591,0),new Vector2(85,40),23,Purple);
