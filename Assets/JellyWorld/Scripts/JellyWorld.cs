@@ -103,13 +103,14 @@ namespace JellyWorldGame
         {
             decor=Group("Marshmallow archipelago",transform);
             menuClouds=Group("Menu cloud scenery",decor);sidebarScenery=Group("Menu right-side scenery",decor);
-            var ground=Application.isPlaying?ComfortMaterial(mint,"E5ECEB",.28f):mint;
-            var rose=Application.isPlaying?ComfortMaterial(blush,"F1E6EA",.28f):blush;
-            var lavender=Application.isPlaying?ComfortMaterial(candy[4],"E6E8F2",.28f):candy[4];
-            Shape("Pistachio planet",decor,new Vector3(0,-7,16),new Vector3(33,8,16),ground,true);
+            landscapeGround=Application.isPlaying?ComfortMaterial(mint,"E5ECEB",.28f):mint;
+            landscapeRose=Application.isPlaying?ComfortMaterial(blush,"F1E6EA",.28f):blush;
+            landscapeLavender=Application.isPlaying?ComfortMaterial(candy[4],"E6E8F2",.28f):candy[4];
+            homeBackdropApplied=null;sceneryPebbles.Clear();
+            Shape("Pistachio planet",decor,new Vector3(0,-7,16),new Vector3(33,8,16),landscapeGround,true);
             Shape("Vanilla shore",decor,new Vector3(0,-7.2f,8),new Vector3(30,6,9),cream,true);
-            Shape("Rose dune",decor,new Vector3(-10,-5.5f,14),new Vector3(12,7,10),rose,true);
-            Shape("Lavender dune",decor,new Vector3(11,-5.2f,15),new Vector3(14,7,10),lavender,true);
+            roseDune=Shape("Rose dune",decor,new Vector3(-10,-5.5f,14),new Vector3(12,7,10),landscapeRose,true).transform;
+            lavenderDune=Shape("Lavender dune",decor,new Vector3(11,-5.2f,15),new Vector3(14,7,10),landscapeLavender,true).transform;
             for(int side=-1;side<=1;side+=2) {
                 if(side==1)for(int i=0;i<4;i++) {
                     float x=side*(7.6f+i*.9f);
@@ -124,7 +125,7 @@ namespace JellyWorldGame
             }
             for(int i=0;i<22;i++) {
                 float x=Mathf.Sin(i*12.32f)*11, y=-4.4f+Mathf.Cos(i*3.1f)*.35f;
-                Shape("Sugar pebble",decor,new Vector3(x,y,1+i%3),new Vector3(.3f,.2f,.32f),candy[i%5],true);
+                sceneryPebbles.Add(Shape("Sugar pebble",decor,new Vector3(x,y,1+i%3),new Vector3(.3f,.2f,.32f),candy[i%5],true));
             }
         }
         void BuildHero()
@@ -234,6 +235,7 @@ namespace JellyWorldGame
             HideCampaignPages();
             BeginRaceRun();
             ResetContextHints();
+            RefreshBackdropTheme();
             UpdateHUD();Tone(520,.13f);idle=0;
         }
         public void ShowMenu()
@@ -250,11 +252,13 @@ namespace JellyWorldGame
             HideCampaignPages();
             RefreshJourneyHome();
             ResetContextHints();
+            RefreshBackdropTheme();
         }
         void Update()
         {
             TickRace();
             RefreshContextHelp();
+            RefreshBackdropTheme();
             if(mode!="play" || paused)ResetBoardGesture();
             UpdateTileHover();
             if(mode=="range") { if(Input.GetKeyDown(KeyCode.Escape)) TogglePause(); return; }

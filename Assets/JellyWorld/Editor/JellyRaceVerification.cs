@@ -127,7 +127,7 @@ public static class JellyRaceVerification
     {
         yield return null;world.ShowMenu();yield return null;
         Check(GameObject.Find("Race mode entry")!=null,"home exposes the race entry");
-        yield return Capture("01-home");yield return Capture("01-home-1280",1280,720);
+        yield return Capture("01-home");yield return Capture("01-home-1280",1280,720);yield return Capture("01-home-4x3",1024,768);
         var help=GameObject.Find("Instruction").GetComponent<Text>();
         string homeHelp=help.text;
         Check(homeHelp.Contains("有限步数"),"home has persistent mode guidance");
