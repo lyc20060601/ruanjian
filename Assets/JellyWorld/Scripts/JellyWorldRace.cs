@@ -52,11 +52,15 @@ namespace JellyWorldGame
         {
             if(!RaceMode || !raceClock.Completed || raceResultShown)return;
             raceResultShown=true;mode="result";busy=false;ResetBoardGesture();Deselect();ClearHints();
+            int previousBest=JellyRace.BestMilliseconds(RaceTarget);
             bool record=JellyRace.Record(RaceTarget,RaceSeconds);
+            double difference=(System.Math.Ceiling(RaceSeconds*1000)-previousBest)/1000d;
+            string comparison=previousBest==0?"首次完成，已保存本机纪录。":difference==0?"与本机最快用时持平":
+                record?"比上次纪录快 "+(-difference).ToString("0.000")+" 秒":"比本机最快慢 "+difference.ToString("0.000")+" 秒";
             PlaySound(JellySound.Win,.6f);UpdateHUD();
             ShowDialog(record?"新的竞速纪录！":"竞速完成",JellyRace.FormatTime(RaceSeconds,true),
                 "目标 "+RaceTarget.ToString("N0")+" 分 · 本次 "+score.ToString("N0")+" 分\n"+
-                "本机最快  "+JellyRace.BestLabel(RaceTarget),
+                "本机最快  "+JellyRace.BestLabel(RaceTarget)+"\n"+comparison,
                 "再跑一次  →",()=>StartRace(RaceTarget),true,ShowRaceLobby,"切换目标",ShowMenu,"返回主页");
             var timeLabel=modal.Find("Dialog card/Dialog subtitle").GetComponent<Text>();timeLabel.fontSize=48;timeLabel.fontStyle=FontStyle.Bold;
         }
