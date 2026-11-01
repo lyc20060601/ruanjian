@@ -571,7 +571,7 @@ namespace JellyWorldGame
         {
             ShowDialog("操作说明","",
                 "拖动或点击两颗相邻果冻，三个同色即可消除。\n四连留下行/列特效，T 型留下范围爆炸，五连留下全盘消除。\n特殊果冻再次被消除时触发，连锁可获得更多分数。\n右侧逐项显示积分、收集与清冰目标。\n通关逐步解锁道具，每局自动补满。",
-                "开始游戏",StartChallenge,true);
+                "知道了",()=>modal.gameObject.SetActive(false),false);
         }
         void ShowDialog(string title,string subtitle,string detail,string primary,Action action,bool home,Action secondary=null,string secondaryLabel=null,Action tertiary=null,string tertiaryLabel=null)
         {
