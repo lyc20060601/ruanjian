@@ -13,6 +13,7 @@ namespace JellyWorldGame
         {
             toolPoolLayout=Rect("Tool pool",parent,new Vector2(603,-137),new Vector2(302,488));
             var tray=toolPoolLayout;
+            ReadingPanel("Tools backing",tray,new Vector2(0,-2),new Vector2(302,476));
             Label("Pool title",tray,"旅途道具",new Vector2(0,209),new Vector2(254,38),23,Ink,TextAnchor.MiddleLeft,true);
             for(int i=0;i<5;i++) {
                 int index=i;float y=144-i*76;
@@ -47,12 +48,16 @@ namespace JellyWorldGame
                 poolCards[i].GetComponent<JellyUISurface>().SetSubdued(!unlocked || !InfiniteMode && count<=0);
                 poolCounts[i].text=!unlocked?"—":InfiniteMode?"∞":count.ToString();
                 var detail=poolCards[i].transform.Find("Tool detail "+i).GetComponent<Text>();
-                detail.text=unlocked?poolDetails[i]:"通过第 "+(JellyJourney.ToolUnlockLevel(i)-1)+" 关解锁";
-                poolCards[i].transform.Find("Tool icon "+i).GetComponent<Image>().color=unlocked?Color.white:new Color(1,1,1,.35f);
+                detail.text=!unlocked?"通过第 "+(JellyJourney.ToolUnlockLevel(i)-1)+" 关解锁":!InfiniteMode && count<=0?"本局已用完":poolDetails[i];
+                poolCards[i].transform.Find("Tool icon "+i).GetComponent<Image>().color=unlocked?Color.white:new Color(1,1,1,.55f);
                 bool chosen=i<2 && activeTool==i || i==3 && ChoosingLanding || ActingTool==i;
                 poolCards[i].GetComponent<JellyUISurface>().SetSelected(chosen);
                 poolCards[i].GetComponent<Button>().interactable=unlocked && !busy && !paused && (InfiniteMode || count>0);
-                poolCards[i].color=chosen?new Color(.65f,.86f,1):!unlocked || !InfiniteMode && count<=0?new Color(.95f,.92f,.99f):Color.Lerp(candy[i].color,Color.white,.86f);
+                bool unavailable=!unlocked || !InfiniteMode && count<=0;
+                poolCards[i].color=chosen?Purple:unavailable?new Color(.87f,.89f,.93f):Color.white;
+                poolCards[i].transform.Find("Tool name "+i).GetComponent<Text>().color=chosen?Color.white:unavailable?MutedText:Ink;
+                detail.color=chosen?new Color(.92f,.92f,1):MutedText;
+                poolCounts[i].color=chosen?Color.white:Ink;
             }
             if(toolText!=null)toolText.text=ActingTool>=0?poolNames[ActingTool]+" · 使用中":ChoosingLanding?"点击棋盘选择落点":activeTool>=0?"点击棋盘使用 · 再点可取消":InfiniteMode?"全道具开放 · 自由探索":"每局补满 · 使用不消耗步数";
         }

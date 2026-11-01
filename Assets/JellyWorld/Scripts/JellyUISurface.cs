@@ -55,16 +55,16 @@ namespace JellyWorldGame
                 Color edge=Color.Lerp(face,new Color(face.r*.65f,face.g*.72f,face.b*.85f,alpha),.38f);
                 AddLayer(rect,new Vector2(0,-edgeDepth),0,edge);
             }
-            float border=panel?.55f:style==SurfaceStyle.Choice?.65f+focus*.55f:focus*.8f;
+            float border=panel?1:style==SurfaceStyle.Choice?1.4f+focus*.6f:1.15f+focus*.6f;
             if(border>.1f) {
-                Color outline=selected?new Color(.29f,.62f,.93f,.72f*alpha):new Color(.62f,.69f,.86f,(panel?.15f:.17f+focus*.15f)*alpha);
+                Color outline=selected?new Color(.25f,.20f,.53f,alpha):new Color(.32f,.37f,.47f,(panel?.32f:available?.82f:.43f)*alpha);
                 AddLayer(rect,new Vector2(0,FaceOffset),border,outline);
             }
             foreach(var original in source) {
                 var vertex=original;float t=Mathf.InverseLerp(rect.yMin,rect.yMax,vertex.position.y);
                 Color color=vertex.color;
-                var bottom=Color.Lerp(color,new Color(.76f,.78f,.91f,color.a),primary?.065f:.025f);
-                var top=Color.Lerp(color,new Color(1,1,1,color.a),(primary?.18f:.075f)+focus*.035f);
+                var bottom=Color.Lerp(color,new Color(.35f,.38f,.49f,color.a),primary?.04f:.015f);
+                var top=Color.Lerp(color,new Color(1,1,1,color.a),(primary?.055f:.025f)+focus*.02f);
                 vertex.color=Color.Lerp(bottom,top,t);
                 vertex.uv1=curved?new Vector4(Mathf.InverseLerp(rect.xMin,rect.xMax,vertex.position.x),t,rect.width,rect.height):Vector4.zero;
                 vertex.position+=Vector3.up*FaceOffset;output.Add(vertex);

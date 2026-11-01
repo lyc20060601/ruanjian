@@ -60,7 +60,7 @@ Shader "Jelly World/Soft Button"
                     float3 normal=normalize(float3(outward*bevel*.82,sqrt(max(.12,1-bevel*bevel*.67))));
                     float light=dot(normal,normalize(float3(-.35,.65,.90)));
                     color.rgb*=.86+.18*light;
-                    float shine=pow(saturate(dot(normal,normalize(float3(-.18,.42,.94)))),18)*.19;
+                    float shine=pow(saturate(dot(normal,normalize(float3(-.18,.42,.94)))),18)*.055;
                     color.rgb=lerp(color.rgb,float3(1,1,1),shine);
                 }
                 #ifdef UNITY_UI_CLIP_RECT

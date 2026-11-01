@@ -140,7 +140,7 @@ namespace JellyWorldGame
             BuildJourneyUI(parent);
             ranksUI=Rect("Local leaderboard",parent,Vector2.zero,new Vector2(1600,900));
             ranksUI.gameObject.AddComponent<JellyUIReveal>();
-            Panel("Rank backdrop",ranksUI,Vector2.zero,new Vector2(6000,4000),Porcelain);
+            Panel("Rank backdrop",ranksUI,Vector2.zero,new Vector2(6000,4000),UiBackdrop);
             Label("Rank title",ranksUI,"本地排行榜",new Vector2(-534,376),new Vector2(430,65),40,Ink);
             Label("Rank scope",ranksUI,"仅保存本机 · 每关历史前 6 次成绩",new Vector2(-487,317),new Vector2(525,37),18,Purple);
             Button("Rank back",ranksUI,"返回关卡",new Vector2(661,377),new Vector2(178,52),Color.white,Ink,ShowLevelSelect,21);
@@ -173,6 +173,11 @@ namespace JellyWorldGame
             Button("Previous rank",rankContent,"‹",new Vector2(-676,238),new Vector2(70,44),Color.white,Ink,()=>{rankLevel=(rankLevel+JellyLevels.All.Length)%(JellyLevels.All.Length+1);RenderRanks();},30);
             Button("Next rank",rankContent,"›",new Vector2(676,238),new Vector2(70,44),Color.white,Ink,()=>{rankLevel=(rankLevel+1)%(JellyLevels.All.Length+1);RenderRanks();},30);
             Label("Rank category",rankContent,rankLevel==0?"无限模式":"第 "+rankLevel+" 关 · "+JellyLevels.Get(rankLevel).Name,new Vector2(0,238),new Vector2(1080,48),26,Ink,TextAnchor.MiddleCenter);
+            Label("Rank number heading",rankContent,"名次",new Vector2(-591,204),new Vector2(85,24),14,MutedText);
+            Label("Rank player heading",rankContent,"玩家",new Vector2(-280,204),new Vector2(470,24),14,MutedText);
+            Label("Rank score heading",rankContent,"分数",new Vector2(140,204),new Vector2(230,24),14,MutedText,TextAnchor.MiddleRight);
+            Label("Rank stars heading",rankContent,"星星",new Vector2(350,204),new Vector2(160,24),14,MutedText,TextAnchor.MiddleCenter);
+            Label("Rank date heading",rankContent,"日期",new Vector2(544,204),new Vector2(213,24),14,MutedText,TextAnchor.MiddleRight);
             var rows=JellyProgress.Ranking(rankLevel);
             if(rows.Count==0)Label("Rank empty",rankContent,"暂无记录",new Vector2(0,55),new Vector2(650,55),29,Purple,TextAnchor.MiddleCenter);
             for(int i=0;i<rows.Count;i++) {

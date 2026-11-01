@@ -36,8 +36,8 @@ namespace JellyWorldGame
         AudioSource audioSource;
         bool sound=true, paused;
         int Target { get { return RaceMode?RaceTarget:LevelSpec.Score; } }
-        Color Ink { get { return new Color(.22f,.19f,.34f); } }
-        Color Purple { get { return new Color(.43f,.29f,.70f); } }
+        Color Ink { get { return new Color(.13f,.17f,.25f); } }
+        Color Purple { get { return new Color(.32f,.22f,.60f); } }
 
         void Start()
         {
@@ -103,10 +103,13 @@ namespace JellyWorldGame
         {
             decor=Group("Marshmallow archipelago",transform);
             menuClouds=Group("Menu cloud scenery",decor);sidebarScenery=Group("Menu right-side scenery",decor);
-            Shape("Pistachio planet",decor,new Vector3(0,-7,16),new Vector3(33,8,16),mint,true);
+            var ground=Application.isPlaying?ComfortMaterial(mint,"E5ECEB",.28f):mint;
+            var rose=Application.isPlaying?ComfortMaterial(blush,"F1E6EA",.28f):blush;
+            var lavender=Application.isPlaying?ComfortMaterial(candy[4],"E6E8F2",.28f):candy[4];
+            Shape("Pistachio planet",decor,new Vector3(0,-7,16),new Vector3(33,8,16),ground,true);
             Shape("Vanilla shore",decor,new Vector3(0,-7.2f,8),new Vector3(30,6,9),cream,true);
-            Shape("Rose dune",decor,new Vector3(-10,-5.5f,14),new Vector3(12,7,10),blush,true);
-            Shape("Lavender dune",decor,new Vector3(11,-5.2f,15),new Vector3(14,7,10),candy[4],true);
+            Shape("Rose dune",decor,new Vector3(-10,-5.5f,14),new Vector3(12,7,10),rose,true);
+            Shape("Lavender dune",decor,new Vector3(11,-5.2f,15),new Vector3(14,7,10),lavender,true);
             for(int side=-1;side<=1;side+=2) {
                 if(side==1)for(int i=0;i<4;i++) {
                     float x=side*(7.6f+i*.9f);
@@ -127,7 +130,7 @@ namespace JellyWorldGame
         void BuildHero()
         {
             hero=Group("Welcome • jelly island",transform);
-            hero.localPosition=new Vector3(4,.4f,0);hero.localScale=Vector3.one*.94f;
+            hero.localPosition=new Vector3(4,.65f,0);hero.localScale=Vector3.one*.94f;
             Shape("Floating island icing",hero,new Vector3(0,-2.9f,1),new Vector3(6.9f,1.0f,4.1f),cream,true);
             Shape("Floating island base",hero,new Vector3(0,-3.3f,1.4f),new Vector3(6.4f,1.5f,3.8f),candy[4],true);
             MakeCharacter(hero,new Vector3(-1.45f,-1.55f,0),1.95f,0,-9);
@@ -259,7 +262,7 @@ namespace JellyWorldGame
                 cam.orthographicSize=onBoard?Mathf.Max((BoardSize+2.0f)*.5f,(BoardSize+2.0f)*.89f/cam.aspect):Mathf.Max(6.15f,10.7f/cam.aspect);
                 cam.transform.position=new Vector3(onBoard?(BoardSize+2.7f)*.19626f:0,0,-22);
             }
-            if(hero!=null && hero.gameObject.activeSelf) hero.localPosition=new Vector3(4,.4f+Mathf.Sin(Time.unscaledTime*.9f)*.13f,0);
+            if(hero!=null && hero.gameObject.activeSelf) hero.localPosition=new Vector3(4,.65f+Mathf.Sin(Time.unscaledTime*.9f)*.13f,0);
             if(!Application.isPlaying || mode!="play") return;
             if(Input.GetKeyDown(KeyCode.Escape)) { if(ChoosingLanding)CancelLandingChoice();else TogglePause();return; }
             if(paused)return;
@@ -501,6 +504,9 @@ namespace JellyWorldGame
         }
         Button Button(string name,Transform parent,string value,Vector2 pos,Vector2 size,Color bg,Color fg,Action action,int fontSize=23,bool emphasized=false)
         {
+            bool filled=emphasized || fg.r+fg.g+fg.b>2.6f;
+            if(filled){fg=Color.white;if(bg.grayscale>.52f)bg=Purple;}
+            else {bg=Color.Lerp(Color.white,bg,.08f);bg.a=1;fg=Ink;}
             var image=Panel(name,parent,pos,size,bg);
             if(uiButtonMaterial!=null)image.material=uiButtonMaterial;
             var surface=image.gameObject.AddComponent<JellyUISurface>();
@@ -533,13 +539,12 @@ namespace JellyWorldGame
             BuildExperienceHome();
             gameUI=Rect("Play HUD",r,Vector2.zero,new Vector2(1600,900));
             var stats=Rect("Compact score bar",gameUI,new Vector2(-178,405),new Vector2(1040,78));
-            Label("HUD eyebrow",stats,"JELLY WORLD / PLAY",new Vector2(-341,24),new Vector2(284,22),12,Purple,TextAnchor.MiddleLeft,true);
-            chapterLabel=Label("World index",stats,"",new Vector2(-341,-2),new Vector2(284,38),20,Ink,TextAnchor.MiddleLeft,true);
+            chapterLabel=Label("World index",stats,"",new Vector2(-341,5),new Vector2(284,50),22,Ink,TextAnchor.MiddleLeft,true);
             var scoreChip=Card("Score chip",stats,new Vector2(-92,5),new Vector2(188,66),Color.white);scoreChip.raycastTarget=false;
-            Label("Score caption",stats,"当前得分",new Vector2(-92,23),new Vector2(150,22),12,Purple);
+            Label("Score caption",stats,"当前得分",new Vector2(-92,23),new Vector2(150,22),14,MutedText);
             scoreText=Label("Score",stats,"0",new Vector2(-92,-4),new Vector2(150,38),29,Ink,TextAnchor.MiddleLeft,true);
             goalText=Label("Goal",stats,"",new Vector2(126,5),new Vector2(198,42),20,Ink);
-            moveCaption=Label("Move caption",stats,"步数",new Vector2(303,25),new Vector2(132,22),12,Purple,TextAnchor.MiddleCenter);
+            moveCaption=Label("Move caption",stats,"步数",new Vector2(303,25),new Vector2(132,22),14,MutedText,TextAnchor.MiddleCenter);
             moveText=Label("Moves",stats,"26",new Vector2(303,-3),new Vector2(140,42),30,Ink,TextAnchor.MiddleCenter,true);
             var track=Panel("Progress track",stats,new Vector2(-28,-39),new Vector2(920,5),new Color(.90f,.87f,.94f));track.raycastTarget=false;
             progress=Panel("Progress",track.transform,Vector2.zero,new Vector2(920,5),RaceAccent);progress.raycastTarget=false;
@@ -568,7 +573,6 @@ namespace JellyWorldGame
             modal.gameObject.SetActive(true);
             Panel("Veil",modal,Vector2.zero,new Vector2(6000,4000),new Color(.16f,.12f,.28f,.46f));
             var card=Card("Dialog card",modal,Vector2.zero,new Vector2(690,520),Porcelain).transform;
-            Label("Dialog eyebrow",card,"JELLY WORLD  /  A SWEET MOMENT",new Vector2(0,229),new Vector2(610,22),12,new Color(.52f,.47f,.66f),TextAnchor.MiddleCenter,true);
             Label("Dialog heading",card,title,new Vector2(0,185),new Vector2(630,57),34,Purple,TextAnchor.MiddleCenter,true);
             Label("Dialog subtitle",card,subtitle,new Vector2(0,116),new Vector2(620,53),29,Ink,TextAnchor.MiddleCenter);
             Label("Dialog details",card,detail,new Vector2(0,15),new Vector2(610,138),21,new Color(.45f,.40f,.54f),TextAnchor.MiddleCenter);
