@@ -233,7 +233,7 @@ namespace JellyWorldGame
             if(raceUI!=null)raceUI.gameObject.SetActive(false);
             HideCampaignPages();
             BeginRaceRun();
-            Notice(RaceMode?"计时开始！交换果冻，尽快达到目标分数":InfiniteMode?"交换相邻果冻，三个同色消除":ObjectiveSummary());
+            ResetContextHints();
             UpdateHUD();Tone(520,.13f);idle=0;
         }
         public void ShowMenu()
@@ -249,18 +249,21 @@ namespace JellyWorldGame
             if(infiniteUI!=null)infiniteUI.gameObject.SetActive(false);
             HideCampaignPages();
             RefreshJourneyHome();
+            ResetContextHints();
         }
         void Update()
         {
             TickRace();
+            RefreshContextHelp();
             if(mode!="play" || paused)ResetBoardGesture();
             UpdateTileHover();
             if(mode=="range") { if(Input.GetKeyDown(KeyCode.Escape)) TogglePause(); return; }
             if(mode=="golem") { if(Input.GetKeyDown(KeyCode.Escape)) TogglePause(); return; }
             if(cam!=null) {
                 bool onBoard=mode=="play" || mode=="result";
-                cam.orthographicSize=onBoard?Mathf.Max((BoardSize+2.0f)*.5f,(BoardSize+2.0f)*.89f/cam.aspect):Mathf.Max(6.15f,10.7f/cam.aspect);
-                cam.transform.position=new Vector3(onBoard?(BoardSize+2.7f)*.19626f:0,0,-22);
+                float boardFrame=BoardSize+2f+Mathf.Clamp(BoardSize-8,0,4)*.5f;
+                cam.orthographicSize=onBoard?Mathf.Max(boardFrame*.5f,boardFrame*.89f/cam.aspect):Mathf.Max(6.15f,10.7f/cam.aspect);
+                cam.transform.position=new Vector3(onBoard?(boardFrame+.7f)*.19626f:0,0,-22);
             }
             if(hero!=null && hero.gameObject.activeSelf) hero.localPosition=new Vector3(4,.65f+Mathf.Sin(Time.unscaledTime*.9f)*.13f,0);
             if(!Application.isPlaying || mode!="play") return;
@@ -358,7 +361,7 @@ namespace JellyWorldGame
             yield return new WaitForSeconds(.23f);
             var matches=board.Matches();
             if(matches.Count==0) {
-                board.Swap(a,b);SwapVisual(a,b);Notice("需要三个同色相连");
+                board.Swap(a,b);SwapVisual(a,b);Notice("需要三个同色相连",true);
                 Tone(210,.08f);yield return new WaitForSeconds(.23f);busy=false;RefreshToolPool();yield break;
             }
             if(!UnlimitedMoves)moves--;yield return Resolve(matches,true,b);
@@ -449,7 +452,7 @@ namespace JellyWorldGame
             if(mode!="play" || busy || paused) return;
             if(tool<0 || tool>2 || !RequireTool(tool))return;
             ResetBoardGesture();CancelLandingChoice();
-            if(!InfiniteMode && charges[tool]<=0) {Notice("这个道具已用完，下局会补满");return;}
+            if(!InfiniteMode && charges[tool]<=0) {Notice("这个道具已用完，下局会补满",true);return;}
             Deselect();ClearHints();
             if(tool==2) {Shuffle(true);return;}
             activeTool=activeTool==tool?-1:tool;
@@ -469,20 +472,20 @@ namespace JellyWorldGame
             paused=true;ResetBoardGesture();Time.timeScale=0;
             SyncRacePause();
             if(Guardian!=null)Guardian.SyncCursor();if(Range!=null)Range.SyncCursor();
-            ShowDialog("暂停","","","继续",()=>TogglePause(),true);
-            Button("Pause audio settings",modal,"音效设置",new Vector2(0,10),new Vector2(280,52),new Color(.86f,.94f,1),Ink,OpenAudioSettings,21);
+            ShowDialog("已暂停",RaceMode?"竞速计时已停止":"棋盘操作已暂停","","继续游戏",()=>TogglePause(),true);
+            Button("Pause audio settings",modal,"设置",new Vector2(0,10),new Vector2(280,52),new Color(.86f,.94f,1),Ink,OpenAudioSettings,21);
         }
-        void Notice(string s) { if(toast!=null)toast.text=s; }
         void UpdateHUD()
         {
             scoreText.text=score.ToString("N0");moveText.fontSize=30;moveText.text=UnlimitedMoves?"∞":moves.ToString("00");
             goalText.text=InfiniteMode?"目标 —":"目标 "+Target.ToString("N0");
+            goalText.gameObject.SetActive(!InfiniteMode);progress.transform.parent.gameObject.SetActive(!InfiniteMode);
             progress.fillAmount=InfiniteMode?1:ObjectiveProgress();
-            if(moveRule!=null)moveRule.text=RaceMode?"达标停表 · 暂停不计时":InfiniteMode?"不限步数":"有效交换消耗 1 步";
             if(chapterLabel!=null)chapterLabel.text=RaceMode?"计时竞速":InfiniteMode?"自由乐园":"第 "+level+" 关 · "+LevelSpec.MapName;
             RefreshToolPool();
             RefreshObjectives();
             RefreshRaceHUD();
+            RefreshContextHelp();
         }
         RectTransform Rect(string name,Transform parent,Vector2 pos,Vector2 size)
         {
@@ -516,6 +519,7 @@ namespace JellyWorldGame
             var colors=b.colors;colors.highlightedColor=Color.white;colors.pressedColor=Color.white;colors.disabledColor=new Color(.96f,.96f,1);b.colors=colors;
             b.onClick.AddListener(()=>{PlaySound(JellySound.Click,.45f);action();});
             b.gameObject.AddComponent<JellyButtonFeedback>().world=this;
+            AttachControlHint(b,ButtonHelp(name));
             Label(name+" label",b.transform,value,Vector2.zero,size-new Vector2(16,4),fontSize,fg,TextAnchor.MiddleCenter,emphasized);
             return b;
         }
@@ -553,12 +557,10 @@ namespace JellyWorldGame
             Button("Pause",gameUI,"暂停",new Vector2(689,412),new Vector2(108,51),new Color(1,1,1,.94f),Ink,TogglePause,20);
             BuildObjectivePanel(gameUI);
             BuildToolPool(gameUI);
-            Button("Hint",gameUI,"提示",new Vector2(-664,-408),new Vector2(118,48),new Color(1,1,1,.86f),Ink,()=>Hint(),19);
-            toast=Label("Instruction",gameUI,"",new Vector2(-123,-408),new Vector2(880,40),20,Ink,TextAnchor.MiddleCenter);
             comboText=Label("Combo",gameUI,"",new Vector2(-176,354),new Vector2(610,44),28,Purple,TextAnchor.MiddleCenter,true);
-            moveRule=Label("Goal foot",gameUI,"",new Vector2(521,-408),new Vector2(420,30),15,Ink,TextAnchor.MiddleCenter);
             BuildInfiniteUI(r);BuildGuardianUI(r);BuildRangeUI(r);BuildCampaignUI(r);
             BuildRaceUI(r);
+            BuildContextHelp(r);
             modal=Rect("Dialog",r,Vector2.zero,new Vector2(1600,900));modal.gameObject.SetActive(false);
         }
         void ShowHelp()

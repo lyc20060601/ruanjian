@@ -54,7 +54,7 @@ namespace JellyWorldGame
             ClearUIChildren(modal);modal.gameObject.SetActive(true);
             Panel("Audio veil",modal,Vector2.zero,new Vector2(6000,4000),new Color(.12f,.16f,.24f,.48f));
             var card=Card("Audio settings card",modal,Vector2.zero,new Vector2(650,560),Porcelain).transform;
-            Label("Audio heading",card,"舒适设置",new Vector2(0,222),new Vector2(558,50),34,Ink,TextAnchor.MiddleCenter,true);
+            Label("Audio heading",card,"声音与画面",new Vector2(0,222),new Vector2(558,50),34,Ink,TextAnchor.MiddleCenter,true);
             AddVolumeSlider(card,"界面音量",112,uiVolume,value=>{uiVolume=value;StoreAudioVolumes();});
             AddVolumeSlider(card,"游戏音量",30,gameVolume,value=>{gameVolume=value;StoreAudioVolumes();});
             var effects=Button("Reduced effects",card,ReducedEffects?"简洁特效：开":"简洁特效：关",new Vector2(0,-65),new Vector2(540,50),new Color(.90f,.86f,1),Ink,()=>{},21);

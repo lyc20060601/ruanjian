@@ -7,7 +7,7 @@ namespace JellyWorldGame
 {
     public partial class JellyWorld
     {
-        Text continueLabel,homeGrowth,homeUnlock,journeyStars,chapterTitle,chapterNote;
+        Text continueLabel,homeGrowth,homeUnlock,journeyStars,chapterTitle,chapterNote,objectivesHeading;
         Text[] objectiveValues=new Text[4];
         Image[] objectiveBars=new Image[4];
         GameObject[] objectiveRows=new GameObject[4];
@@ -142,6 +142,7 @@ namespace JellyWorldGame
                 var surface=card.GetComponent<JellyUISurface>();surface.style=JellyUISurface.SurfaceStyle.Choice;surface.SetSelected(number==JellyProgress.Unlocked);
                 var button=card.gameObject.AddComponent<Button>();button.targetGraphic=card;button.interactable=open;var colors=button.colors;colors.disabledColor=Color.white;colors.highlightedColor=Color.white;button.colors=colors;button.navigation=new Navigation{mode=Navigation.Mode.None};
                 button.onClick.AddListener(()=>{PlaySound(JellySound.Click,.45f);StartLevel(number);});card.gameObject.AddComponent<JellyButtonFeedback>().world=this;
+                AttachControlHint(button,open?"第 "+number+" 关："+string.Join("、",goals.ToArray())+"；点击开始。":"先通过第 "+(number-1)+" 关，才能解锁本关。");
             }
         }
         Color ChapterAccent(int chapter)
@@ -152,7 +153,7 @@ namespace JellyWorldGame
         {
             var card=Rect("Objectives card",parent,new Vector2(603,250),new Vector2(302,250));
             ReadingPanel("Objectives backing",card,new Vector2(0,62),new Vector2(302,102));
-            Label("Objectives heading",card,"本关目标",new Vector2(0,91),new Vector2(254,38),22,Ink,TextAnchor.MiddleLeft,true);
+            objectivesHeading=Label("Objectives heading",card,"本关目标",new Vector2(0,91),new Vector2(254,38),22,Ink,TextAnchor.MiddleLeft,true);
             for(int i=0;i<4;i++) {
                 var row=Rect("Objective row "+i,card,new Vector2(0,44-i*44),new Vector2(254,42));objectiveRows[i]=row.gameObject;
                 objectiveValues[i]=Label("Objective value "+i,row,"",new Vector2(0,6),new Vector2(254,28),18,Ink);
@@ -163,8 +164,9 @@ namespace JellyWorldGame
         void RefreshObjectives()
         {
             if(objectiveValues[0]==null)return;
-            for(int i=0;i<4;i++)objectiveRows[i].SetActive(false);
-            if(InfiniteMode){objectiveRows[0].SetActive(true);objectiveValues[0].text="慢慢玩，自由探索";objectiveBars[0].fillAmount=1;ArrangeToolPool(1);return;}
+            objectivesHeading.text=InfiniteMode?"自由模式":"本关目标";
+            for(int i=0;i<4;i++){objectiveRows[i].SetActive(false);objectiveBars[i].transform.parent.gameObject.SetActive(!InfiniteMode);}
+            if(InfiniteMode){objectiveRows[0].SetActive(true);objectiveValues[0].text="不限步数 · 全道具开放";ArrangeToolPool(1);return;}
             var c=LevelSpec;int row=0;SetObjective(row++,"积分",score,c.Score);
             if(c.ColorA>=0)SetObjective(row++,JellyLevels.ColorNames[c.ColorA]+"果冻",collected[c.ColorA],c.AmountA);
             if(c.ColorB>=0)SetObjective(row++,JellyLevels.ColorNames[c.ColorB]+"果冻",collected[c.ColorB],c.AmountB);
@@ -187,7 +189,7 @@ namespace JellyWorldGame
         bool RequireTool(int index)
         {
             if(IsToolUnlocked(index))return true;
-            Notice(RaceMode?"竞速模式仅靠消除与连锁得分，不使用道具":"通过第 "+(JellyJourney.ToolUnlockLevel(index)-1)+" 关解锁"+JellyJourney.ToolNames[index]);return false;
+            Notice(RaceMode?"竞速模式仅靠消除与连锁得分，不使用道具":"通过第 "+(JellyJourney.ToolUnlockLevel(index)-1)+" 关解锁"+JellyJourney.ToolNames[index],true);return false;
         }
     }
 }

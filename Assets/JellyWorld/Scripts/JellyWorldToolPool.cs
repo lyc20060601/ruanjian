@@ -22,6 +22,7 @@ namespace JellyWorldGame
                 var surface=card.gameObject.AddComponent<JellyUISurface>();surface.pressTravel=2;surface.style=JellyUISurface.SurfaceStyle.Choice;
                 var button=card.gameObject.AddComponent<Button>();button.targetGraphic=card;var colors=button.colors;colors.disabledColor=Color.white;colors.highlightedColor=Color.white;button.colors=colors;button.navigation=new Navigation{mode=Navigation.Mode.None};
                 button.onClick.AddListener(()=>{PlaySound(JellySound.Click,.45f);SelectPoolTool(index);});
+                AttachControlHint(button,poolNames[i]+"："+poolDetails[i]);
                 var icon=Rect("Tool icon "+i,card.transform,new Vector2(-97,0),new Vector2(59,59)).gameObject.AddComponent<Image>();
                 icon.sprite=toolIcons!=null && i<toolIcons.Length?toolIcons[i]:null;icon.preserveAspect=true;icon.raycastTarget=false;
                 var feedback=card.gameObject.AddComponent<JellyButtonFeedback>();feedback.world=this;feedback.icon=icon.rectTransform;
@@ -58,8 +59,10 @@ namespace JellyWorldGame
                 poolCards[i].transform.Find("Tool name "+i).GetComponent<Text>().color=chosen?Color.white:unavailable?MutedText:Ink;
                 detail.color=chosen?new Color(.92f,.92f,1):MutedText;
                 poolCounts[i].color=chosen?Color.white:Ink;
+                var hint=poolCards[i].GetComponent<JellyControlHint>();
+                hint.message=!unlocked?poolNames[i]+"：通过第 "+(JellyJourney.ToolUnlockLevel(i)-1)+" 关解锁。":!InfiniteMode && count<=0?poolNames[i]+"本局已用完，下一局会补满。":chosen?poolNames[i]+"已选中，再次点击可取消；点击棋盘使用。":poolNames[i]+"："+poolDetails[i]+"，使用不消耗步数。";
             }
-            if(toolText!=null)toolText.text=ActingTool>=0?poolNames[ActingTool]+" · 使用中":ChoosingLanding?"点击棋盘选择落点":activeTool>=0?"点击棋盘使用 · 再点可取消":InfiniteMode?"全道具开放 · 自由探索":"每局补满 · 使用不消耗步数";
+            if(toolText!=null)toolText.text=InfiniteMode?"所有道具可重复使用":"每局补满 · 使用不消耗步数";
         }
     }
 }

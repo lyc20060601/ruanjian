@@ -1,0 +1,37 @@
+PASS: real swaps reach target; pause, records, replay, abandoned runs, mode isolation and rendered UI verified
+PASS: home exposes the race entry
+PASS: home has persistent mode guidance
+PASS: hover explains race targets in the help bar
+PASS: pointer exit restores the page guidance
+PASS: hidden controls clear their hover guidance
+PASS: race target is selectable: 3000
+PASS: race target is selectable: 6000
+PASS: race target is selectable: 10000
+PASS: race starts on its standard board without campaign objectives
+PASS: race dashboard replaces the campaign tool tray
+PASS: race rejects all direct tool entry points
+PASS: blocked race tools produce visible explanatory feedback
+PASS: transient feedback returns to the race instructions
+PASS: live pause freezes the race clock
+PASS: pause guidance shows the resume shortcut
+PASS: live resume continues timing
+PASS: settings pause excludes waiting time
+PASS: closing settings resumes the race
+PASS: invalid swaps revert without score or move changes
+PASS: invalid swaps explain why the move was rejected
+PASS: race board retains a valid move
+PASS: race board retains a valid move
+PASS: race board retains a valid move
+PASS: real matching and cascades finish the race at its target
+PASS: valid race swaps do not consume moves
+PASS: result time is frozen and completion persists one personal best
+PASS: race completion preserves campaign progress and rankings
+PASS: result replay creates a fresh race
+PASS: leaving an unfinished race does not replace its best
+PASS: switching target resets score and uses its own distance
+PASS: infinite mode restores all tools after a race
+PASS: selected tool instructions stay visible after transient notices expire
+PASS: guardian landing guidance shows the cancel shortcut
+PASS: campaign restores its own move and objective rules
+PASS: locked levels explain their unlock condition on hover
+PASS: clicking a locked level retains its explanation without starting it

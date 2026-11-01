@@ -128,6 +128,18 @@ public static class JellyRaceVerification
         yield return null;world.ShowMenu();yield return null;
         Check(GameObject.Find("Race mode entry")!=null,"home exposes the race entry");
         yield return Capture("01-home");yield return Capture("01-home-1280",1280,720);
+        var help=GameObject.Find("Instruction").GetComponent<Text>();
+        string homeHelp=help.text;
+        Check(homeHelp.Contains("有限步数"),"home has persistent mode guidance");
+        var pointer=new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current);
+        var raceHint=GameObject.Find("Race mode entry").GetComponent<JellyControlHint>();
+        raceHint.OnPointerEnter(pointer);
+        Check(help.text.Contains("3000"),"hover explains race targets in the help bar");
+        yield return Capture("08-home-hover");
+        raceHint.OnPointerExit(pointer);Check(help.text==homeHelp,"pointer exit restores the page guidance");
+        var settingsHint=GameObject.Find("Sound").GetComponent<JellyControlHint>();
+        settingsHint.OnPointerEnter(pointer);settingsHint.gameObject.SetActive(false);
+        Check(help.text==homeHelp,"hidden controls clear their hover guidance");settingsHint.gameObject.SetActive(true);
         world.ShowRaceLobby();yield return null;
         foreach(int target in JellyRace.Targets)Check(GameObject.Find("Race start "+target).GetComponent<Button>().interactable,"race target is selectable: "+target);
         yield return Capture("02-race-lobby");yield return Capture("02-race-lobby-1280",1280,720);yield return Capture("02-race-lobby-4x3",1024,768);
@@ -138,9 +150,13 @@ public static class JellyRaceVerification
         int moves=world.moves,charges=world.ToolCharges(0);
         world.ChooseTool(0);world.SummonGuardian();world.StartRange();
         Check(world.mode=="play" && !world.ChoosingLanding && world.ToolCharges(0)==charges,"race rejects all direct tool entry points");
+        Check(help.text.Contains("注意：") && help.text.Contains("不使用道具"),"blocked race tools produce visible explanatory feedback");
+        yield return new WaitForSecondsRealtime(4.65f);
+        Check(help.text.Contains("3,000") && !help.text.Contains("注意："),"transient feedback returns to the race instructions");
         world.TogglePause();double stopped=world.RaceSeconds;
         yield return new WaitForSecondsRealtime(.3f);
         Check(Math.Abs(world.RaceSeconds-stopped)<.01,"live pause freezes the race clock");
+        Check(GameObject.Find("Goal foot").GetComponent<Text>().text=="Esc 继续","pause guidance shows the resume shortcut");
         yield return Capture("04-race-paused");
         world.TogglePause();yield return new WaitForSecondsRealtime(.2f);
         Check(world.RaceSeconds>stopped+.1,"live resume continues timing");
@@ -152,7 +168,7 @@ public static class JellyRaceVerification
         for(int x=0;x<7 && !invalid;x++)for(int y=0;y<8 && !invalid;y++) {
             var a=new Vector2Int(x,y);var b=new Vector2Int(x+1,y);
             world.board.Swap(a,b);bool valid=world.board.Matches().Count>0;world.board.Swap(a,b);
-            if(!valid){int before=world.score;yield return world.SwapRoutine(a,b);Check(world.score==before && world.moves==moves,"invalid swaps revert without score or move changes");invalid=true;}
+            if(!valid){int before=world.score;yield return world.SwapRoutine(a,b);Check(world.score==before && world.moves==moves,"invalid swaps revert without score or move changes");Check(help.text.Contains("三个同色"),"invalid swaps explain why the move was rejected");invalid=true;}
         }
         yield return Capture("03-race-playing");yield return Capture("03-race-playing-1280",1280,720);yield return Capture("03-race-playing-4x3",1024,768);
         for(int attempt=0;attempt<80 && world.mode=="play";attempt++) {
@@ -174,9 +190,27 @@ public static class JellyRaceVerification
         world.StartRace(6000);yield return null;Check(world.RaceTarget==6000 && world.score==0,"switching target resets score and uses its own distance");
         world.StartInfinite();yield return null;
         Check(!world.RaceMode && world.InfiniteMode && Enumerable.Range(0,5).All(world.IsToolUnlocked),"infinite mode restores all tools after a race");
+        world.ChooseTool(0);yield return new WaitForSecondsRealtime(4.65f);
+        Check(help.text.Contains("果冻锤") && help.text.Contains("取消"),"selected tool instructions stay visible after transient notices expire");
+        yield return Capture("09-selected-tool");
+        world.ChooseTool(0);
+        world.SummonGuardian();yield return null;
+        Check(world.ChoosingLanding && GameObject.Find("Goal foot").GetComponent<Text>().text=="Esc 取消","guardian landing guidance shows the cancel shortcut");
+        world.CancelLandingChoice();
         world.score=0;world.StartChallenge();yield return null;
         Check(!world.RaceMode && !world.InfiniteMode && world.moves==world.LevelSpec.Moves,"campaign restores its own move and objective rules");
-        yield return Capture("06-campaign");world.ShowLevelSelect();yield return null;yield return Capture("07-levels");
+        yield return Capture("06-campaign");
+        world.level=12;world.NewGame();yield return null;
+        yield return Capture("11-multiple-objectives");yield return Capture("11-multiple-objectives-1280",1280,720);
+        world.ShowLevelSelect();yield return null;yield return Capture("07-levels");
+        var locked=world.GetComponentsInChildren<Button>().FirstOrDefault(button=>!button.interactable && button.name.StartsWith("Level "));
+        if(locked!=null) {
+            var lockedHint=locked.GetComponent<JellyControlHint>();lockedHint.OnPointerEnter(pointer);
+            Check(help.text.Contains("先通过"),"locked levels explain their unlock condition on hover");
+            lockedHint.OnPointerClick(pointer);
+            Check(help.text.Contains("先通过") && !locked.interactable,"clicking a locked level retains its explanation without starting it");
+            yield return Capture("10-locked-level-hint");lockedHint.OnPointerExit(pointer);
+        }
     }
     static IEnumerator Capture(string name,int width=1600,int height=900)
     {
