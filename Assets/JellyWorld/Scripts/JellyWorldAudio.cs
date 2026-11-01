@@ -75,13 +75,14 @@ namespace JellyWorldGame
         {
             Label(title+" label",card,title,new Vector2(-185,y+22),new Vector2(170,32),20,Ink);
             var percent=Label(title+" value",card,Mathf.RoundToInt(initial*100)+"%",new Vector2(226,y+22),new Vector2(95,32),20,Purple,TextAnchor.MiddleRight);
-            var rt=Rect(title+" slider",card,new Vector2(0,y-9),new Vector2(540,26));
+            var rt=Rect(title+" slider",card,new Vector2(0,y-9),new Vector2(540,36));
             var slider=rt.gameObject.AddComponent<Slider>();slider.minValue=0;slider.maxValue=1;
+            var hitArea=Panel("Slider hit area",rt,Vector2.zero,new Vector2(540,36),Color.clear);hitArea.sprite=null;
             var track=Panel("Slider track",rt,Vector2.zero,new Vector2(540,10),new Color(.82f,.86f,.91f));
             var fillArea=Rect("Slider fill area",rt,Vector2.zero,new Vector2(540,10));
             var fill=Panel("Slider fill",fillArea,Vector2.zero,Vector2.zero,Accent);
-            var handleArea=Rect("Slider handle area",rt,Vector2.zero,new Vector2(516,24));
-            var handle=Panel("Slider handle",handleArea,Vector2.zero,new Vector2(24,0),Purple);
+            var handleArea=Rect("Slider handle area",rt,Vector2.zero,new Vector2(514,36));
+            var handle=Panel("Slider handle",handleArea,Vector2.zero,new Vector2(26,26),Purple);
             slider.fillRect=fill.rectTransform;slider.handleRect=handle.rectTransform;slider.targetGraphic=handle;
             slider.direction=Slider.Direction.LeftToRight;slider.value=initial;
             slider.onValueChanged.AddListener(value=>{percent.text=Mathf.RoundToInt(value*100)+"%";changed(value);});
