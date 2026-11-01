@@ -53,6 +53,7 @@ Unity 单机三消游戏，包含异形关卡、道具成长、守护者探索�
 - [本次验收记录](Docs/verification/2026-10-25/RESULTS.md)
 - [竞速模式与 UI 验收](Docs/verification/2026-10-30/RESULTS.md) · [竞速玩法与验证方法](Docs/RACE_MODE.md)
 - [界面可读性与提示栏优化](Docs/UI_READABILITY.md)
+- [五次小幅细节优化](Docs/DETAIL_POLISH_2026-11-01.md)
 - [模块与玩法说明](Assets/JellyWorld/README.md)
 - [素材来源与授权](THIRD_PARTY_NOTICES.md) · [素材规则](AGENTS.md)
 

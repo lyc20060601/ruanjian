@@ -88,7 +88,7 @@ namespace JellyWorldGame
         string ButtonHelp(string name)
         {
             switch(name) {
-                case "Continue journey":return "继续最近解锁的关卡，在限定步数内完成全部目标。";
+                case "Continue journey":return JellyProgress.Completed==JellyLevels.All.Length?"重玩最终关，也可以在关卡地图选择其他关卡。":"继续最近解锁的关卡，在限定步数内完成全部目标。";
                 case "Start adventure":return "查看地图、目标和星星，选择已解锁关卡开始。";
                 case "Infinite mode entry":return "不限步数，所有道具开放；离开时保存本局得分。";
                 case "Race mode entry":return "选择 3000、6000 或 10000 分目标，竞速成绩按用时记录。";

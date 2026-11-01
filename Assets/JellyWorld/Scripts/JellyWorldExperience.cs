@@ -87,10 +87,13 @@ namespace JellyWorldGame
         {
             if(continueLabel==null)return;
             continueLabel.text=JellyProgress.Completed==0?"开始第 1 关":"继续第 "+JellyProgress.Unlocked+" 关";
-            if(JellyProgress.Completed==12)continueLabel.text="重玩最终关";
+            bool completedAll=JellyProgress.Completed==JellyLevels.All.Length;
+            if(completedAll)continueLabel.text="重玩最终关";
+            var continueHint=continueLabel.GetComponentInParent<JellyControlHint>();
+            if(continueHint!=null)continueHint.message=ButtonHelp("Continue journey");
             bestText.text="已完成 "+JellyProgress.Completed+" / 12 关     星星 "+JellyJourney.TotalStars+" / 36";
             var next=JellyLevels.Get(JellyProgress.Unlocked);
-            homeGrowth.text="下一关："+next.MapName+" · "+next.Moves+" 步";
+            homeGrowth.text=completedAll?"全部关卡已完成，可在关卡地图选择重玩。":"下一关："+next.MapName+" · "+next.Moves+" 步";
             homeUnlock.text=JellyJourney.NextUnlockNote;
         }
         void BuildJourneyUI(Transform parent)

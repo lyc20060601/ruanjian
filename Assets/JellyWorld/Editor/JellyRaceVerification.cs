@@ -128,6 +128,10 @@ public static class JellyRaceVerification
         yield return null;world.ShowMenu();yield return null;
         Check(GameObject.Find("Race mode entry")!=null,"home exposes the race entry");
         yield return Capture("01-home");yield return Capture("01-home-1280",1280,720);yield return Capture("01-home-4x3",1024,768);
+        int homeLevel=world.level;
+        GameObject.Find("How to play").GetComponent<Button>().onClick.Invoke();yield return Capture("12-instructions");
+        GameObject.Find("Dialog primary").GetComponent<Button>().onClick.Invoke();
+        Check(world.mode=="menu" && world.level==homeLevel,"acknowledging instructions preserves the home page and selected level");
         var help=GameObject.Find("Instruction").GetComponent<Text>();
         string homeHelp=help.text;
         Check(homeHelp.Contains("有限步数"),"home has persistent mode guidance");
@@ -162,6 +166,7 @@ public static class JellyRaceVerification
         Check(world.RaceSeconds>stopped+.1,"live resume continues timing");
         world.OpenAudioSettings();stopped=world.RaceSeconds;yield return new WaitForSecondsRealtime(.2f);
         Check(Math.Abs(world.RaceSeconds-stopped)<.01,"settings pause excludes waiting time");
+        yield return Capture("13-settings");
         GameObject.Find("Close audio settings").GetComponent<Button>().onClick.Invoke();yield return null;
         Check(!world.IsPaused,"closing settings resumes the race");
         bool invalid=false;
@@ -184,6 +189,7 @@ public static class JellyRaceVerification
         Check(world.RaceSeconds==finish && best>0 && best==JellyRace.BestMilliseconds(3000),"result time is frozen and completion persists one personal best");
         Check(savedInts.Where(p=>p.Key.StartsWith("JellyWorld.Campaign.")).All(p=>PlayerPrefs.GetInt(p.Key)==p.Value) && savedStrings.All(p=>PlayerPrefs.GetString(p.Key)==p.Value),"race completion preserves campaign progress and rankings");
         yield return Capture("05-race-result");
+        Check(GameObject.Find("Dialog details").GetComponent<Text>().text.Contains("首次完成"),"first sprint completion explains that its record was saved");
         GameObject.Find("Dialog primary").GetComponent<Button>().onClick.Invoke();yield return null;
         Check(world.RaceMode && world.score==0 && !world.RaceCompleted && world.RaceSeconds<.5,"result replay creates a fresh race");
         world.ShowMenu();Check(JellyRace.BestMilliseconds(3000)==best,"leaving an unfinished race does not replace its best");
@@ -211,6 +217,16 @@ public static class JellyRaceVerification
             Check(help.text.Contains("先通过") && !locked.interactable,"clicking a locked level retains its explanation without starting it");
             yield return Capture("10-locked-level-hint");lockedHint.OnPointerExit(pointer);
         }
+        int emptyLevel=Enumerable.Range(1,JellyLevels.All.Length).FirstOrDefault(number=>JellyProgress.Ranking(number).Count==0);
+        world.level=emptyLevel>0?emptyLevel:1;world.ShowLeaderboard();yield return null;
+        var nameInput=GameObject.Find("Player name").GetComponent<InputField>();
+        nameInput.text="";yield return Capture("14-leaderboard-input");nameInput.text=JellyProgress.PlayerName;
+        for(int number=1;number<=JellyLevels.All.Length;number++)PlayerPrefs.SetInt("JellyWorld.Campaign.Stars."+number,3);
+        PlayerPrefs.SetInt("JellyWorld.Campaign.Unlocked",JellyLevels.All.Length);
+        world.ShowMenu();yield return null;
+        Check(GameObject.Find("Home growth").GetComponent<Text>().text.Contains("全部关卡已完成"),"completed profiles do not present a nonexistent next level");
+        Check(GameObject.Find("Continue journey").GetComponent<JellyControlHint>().message.Contains("重玩"),"completed home guidance explains replay immediately");
+        yield return Capture("15-completed-home");
     }
     static IEnumerator Capture(string name,int width=1600,int height=900)
     {

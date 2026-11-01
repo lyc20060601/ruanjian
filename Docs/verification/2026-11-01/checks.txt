@@ -1,5 +1,6 @@
 PASS: real swaps reach target; pause, records, replay, abandoned runs, mode isolation and rendered UI verified
 PASS: home exposes the race entry
+PASS: acknowledging instructions preserves the home page and selected level
 PASS: home has persistent mode guidance
 PASS: hover explains race targets in the help bar
 PASS: pointer exit restores the page guidance
@@ -20,10 +21,12 @@ PASS: closing settings resumes the race
 PASS: invalid swaps revert without score or move changes
 PASS: invalid swaps explain why the move was rejected
 PASS: race board retains a valid move
+PASS: race board retains a valid move
 PASS: real matching and cascades finish the race at its target
 PASS: valid race swaps do not consume moves
 PASS: result time is frozen and completion persists one personal best
 PASS: race completion preserves campaign progress and rankings
+PASS: first sprint completion explains that its record was saved
 PASS: result replay creates a fresh race
 PASS: leaving an unfinished race does not replace its best
 PASS: switching target resets score and uses its own distance
@@ -33,3 +36,5 @@ PASS: guardian landing guidance shows the cancel shortcut
 PASS: campaign restores its own move and objective rules
 PASS: locked levels explain their unlock condition on hover
 PASS: clicking a locked level retains its explanation without starting it
+PASS: completed profiles do not present a nonexistent next level
+PASS: completed home guidance explains replay immediately

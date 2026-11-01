@@ -81,8 +81,8 @@ namespace JellyWorldGame
             var track=Panel("Slider track",rt,Vector2.zero,new Vector2(540,10),new Color(.82f,.86f,.91f));
             var fillArea=Rect("Slider fill area",rt,Vector2.zero,new Vector2(540,10));
             var fill=Panel("Slider fill",fillArea,Vector2.zero,Vector2.zero,Accent);
-            var handleArea=Rect("Slider handle area",rt,Vector2.zero,new Vector2(514,36));
-            var handle=Panel("Slider handle",handleArea,Vector2.zero,new Vector2(26,26),Purple);
+            var handleArea=Rect("Slider handle area",rt,Vector2.zero,new Vector2(514,26));
+            var handle=Panel("Slider handle",handleArea,Vector2.zero,new Vector2(26,0),Purple);
             slider.fillRect=fill.rectTransform;slider.handleRect=handle.rectTransform;slider.targetGraphic=handle;
             slider.direction=Slider.Direction.LeftToRight;slider.value=initial;
             slider.onValueChanged.AddListener(value=>{percent.text=Mathf.RoundToInt(value*100)+"%";changed(value);});
